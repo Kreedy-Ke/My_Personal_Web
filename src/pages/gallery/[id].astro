@@ -1,0 +1,142 @@
+---
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+    const galleries = await getCollection("galleries", ({ data }) => {
+        return data.draft !== true;
+    });
+
+    return galleries.map((gallery) => ({
+        params: { id: gallery.id },
+        props: { gallery },
+    }));
+}
+
+const { gallery } = Astro.props;
+const { Content } = await render(gallery);
+---
+
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>{gallery.data.title}</title>
+        <meta name="description" content={gallery.data.summary} />
+    </head>
+    <body>
+        <main class="page-shell">
+            <a class="back-link" href="/gallery/">← Gallery</a>
+
+            <article>
+                <header>
+                    <time datetime={gallery.data.date.toISOString()}>
+                        {gallery.data.date.toLocaleDateString("zh-CN")}
+                    </time>
+                    <h1>{gallery.data.title}</h1>
+                    <p class="summary">{gallery.data.summary}</p>
+                </header>
+
+                <div class="content">
+                    <Content />
+                </div>
+
+                <section class="image-grid" aria-label="图片列表">
+                    {gallery.data.images.map((image) => (
+                        <figure>
+                            <img
+                                src={image.src}
+                                alt={image.alt ?? ""}
+                                loading="lazy"
+                            />
+                            {image.caption && <figcaption>{image.caption}</figcaption>}
+                        </figure>
+                    ))}
+                </section>
+            </article>
+        </main>
+    </body>
+</html>
+
+<style>
+    :global(*) {
+        box-sizing: border-box;
+    }
+
+    :global(body) {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+            Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", sans-serif;
+        color: #1f2933;
+        background: #f6f2ea;
+    }
+
+    .page-shell {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 64px 0;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 40px;
+        color: #4b5563;
+        text-decoration: none;
+    }
+
+    time {
+        color: #6b7280;
+    }
+
+    h1 {
+        margin: 16px 0;
+        font-size: clamp(40px, 7vw, 72px);
+        line-height: 1;
+    }
+
+    .summary {
+        max-width: 720px;
+        margin: 0 0 32px;
+        font-size: 20px;
+        line-height: 1.7;
+        color: #4b5563;
+    }
+
+    .content {
+        max-width: 720px;
+        margin-bottom: 40px;
+        font-size: 18px;
+        line-height: 1.9;
+    }
+
+    .content :global(p) {
+        margin: 0 0 20px;
+    }
+
+    .image-grid {
+        columns: 3 280px;
+        column-gap: 18px;
+    }
+
+    figure {
+        break-inside: avoid;
+        margin: 0 0 18px;
+        border: 1px solid #d8d0c2;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fffaf1;
+    }
+
+    figure img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    figcaption {
+        padding: 12px 14px;
+        color: #4b5563;
+        line-height: 1.6;
+    }
+</style>

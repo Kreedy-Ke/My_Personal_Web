@@ -1,0 +1,155 @@
+---
+import { getCollection } from "astro:content";
+
+const siteName = "My Personal Site";
+
+const galleries = (await getCollection("galleries", ({ data }) => {
+    return data.draft !== true;
+})).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Gallery | {siteName}</title>
+        <meta name="description" content="图片集列表。" />
+    </head>
+    <body>
+        <main class="page-shell">
+            <a class="back-link" href="/">← Home</a>
+
+            <header>
+                <p class="eyebrow">Gallery</p>
+                <h1>图片集</h1>
+                <p class="intro">摄影、截图、视觉记录和一些值得保存的画面。</p>
+            </header>
+
+            <section class="gallery-grid">
+                {galleries.map((gallery) => (
+                    <a class="gallery-card" href={`/gallery/${gallery.id}/`}>
+                        <img
+                            src={gallery.data.cover ?? gallery.data.images[0]?.src}
+                            alt=""
+                            loading="lazy"
+                        />
+                        <div>
+                            <h2>{gallery.data.title}</h2>
+                            <p>{gallery.data.summary}</p>
+                            <time datetime={gallery.data.date.toISOString()}>
+                                {gallery.data.date.toLocaleDateString("zh-CN")}
+                            </time>
+                        </div>
+                    </a>
+                ))}
+            </section>
+        </main>
+    </body>
+</html>
+
+<style>
+    :global(*) {
+        box-sizing: border-box;
+    }
+
+    :global(body) {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+            Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", sans-serif;
+        color: #1f2933;
+        background: #f6f2ea;
+    }
+
+    .page-shell {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 64px 0;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 40px;
+        color: #4b5563;
+        text-decoration: none;
+    }
+
+    .eyebrow {
+        margin: 0 0 12px;
+        font-size: 14px;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: clamp(40px, 7vw, 72px);
+        line-height: 1;
+    }
+
+    .intro {
+        margin: 24px 0 40px;
+        font-size: 20px;
+        line-height: 1.7;
+        color: #4b5563;
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .gallery-card {
+        overflow: hidden;
+        border: 1px solid #d8d0c2;
+        border-radius: 8px;
+        color: inherit;
+        text-decoration: none;
+        background: #fffaf1;
+    }
+
+    .gallery-card:hover {
+        border-color: #1f2933;
+    }
+
+    .gallery-card img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        background: #e8dfcf;
+    }
+
+    .gallery-card div {
+        padding: 18px;
+    }
+
+    .gallery-card h2 {
+        margin: 0 0 8px;
+        font-size: 22px;
+    }
+
+    .gallery-card p {
+        margin: 0 0 14px;
+        line-height: 1.7;
+        color: #4b5563;
+    }
+
+    time {
+        color: #6b7280;
+    }
+
+    @media (max-width: 860px) {
+        .gallery-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 560px) {
+        .gallery-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
