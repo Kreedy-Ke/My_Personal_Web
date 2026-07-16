@@ -1,11 +1,17 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, type CollectionEntry } from "astro:content";
 
 const siteName = "My Personal Site";
 
+const getWrittenDate = (article: CollectionEntry<"articles">) => {
+    return article.data.writtenDate ?? article.data.date;
+};
+
 const articles = (await getCollection("articles", ({ data }) => {
     return data.draft !== true;
-})).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+})).sort((a, b) => getWrittenDate(b).valueOf() - getWrittenDate(a).valueOf());
+
+const years = [...new Set(articles.map((article) => getWrittenDate(article).getFullYear()))];
 ---
 
 <html lang="zh-CN">
@@ -25,19 +31,32 @@ const articles = (await getCollection("articles", ({ data }) => {
                 <p class="intro">文章、笔记、长文和一些持续整理的想法。</p>
             </header>
 
-            <section class="article-list">
-                {articles.map((article) => (
-                    <a class="article-card" href={`/articles/${article.id}/`}>
-                        <div>
-                            <h2>{article.data.title}</h2>
-                            <p>{article.data.summary}</p>
+            <div class="year-list">
+                {years.map((year) => (
+                    <section class="year-group">
+                        <h2 class="year-title">{year}</h2>
+                        <div class="article-list">
+                            {articles
+                                .filter((article) => getWrittenDate(article).getFullYear() === year)
+                                .map((article) => (
+                                    <a class="article-card" href={`/articles/${article.id}/`}>
+                                        <div>
+                                            <h3>{article.data.title}</h3>
+                                            <p>{article.data.summary}</p>
+                                        </div>
+                                        <time datetime={getWrittenDate(article).toISOString()}>
+                                            {article.data.writtenDate && "写于 "}
+                                            {getWrittenDate(article).toLocaleDateString("zh-CN", {
+                                                month: "2-digit",
+                                                day: "2-digit",
+                                            })}
+                                        </time>
+                                    </a>
+                                ))}
                         </div>
-                        <time datetime={article.data.date.toISOString()}>
-                            {article.data.date.toLocaleDateString("zh-CN")}
-                        </time>
-                    </a>
+                    </section>
                 ))}
-            </section>
+            </div>
         </main>
     </body>
 </html>
@@ -90,6 +109,16 @@ const articles = (await getCollection("articles", ({ data }) => {
         color: #4b5563;
     }
 
+    .year-list {
+        display: grid;
+        gap: 40px;
+    }
+
+    .year-title {
+        margin: 0 0 16px;
+        font-size: 28px;
+    }
+
     .article-list {
         display: grid;
         gap: 16px;
@@ -111,7 +140,7 @@ const articles = (await getCollection("articles", ({ data }) => {
         border-color: #1f2933;
     }
 
-    .article-card h2 {
+    .article-card h3 {
         margin: 0 0 8px;
         font-size: 24px;
     }

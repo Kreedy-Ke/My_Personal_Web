@@ -7,6 +7,8 @@ const reviews = (await getCollection("reviews", ({ data }) => {
     return data.draft !== true;
 })).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
+const years = [...new Set(reviews.map((review) => review.data.date.getFullYear()))];
+
 const categoryLabels = {
     book: "书籍",
     movie: "电影",
@@ -45,43 +47,52 @@ const statusLabels = {
                 <p class="intro">书、电影、动画、游戏、音乐和其他作品的记录与评价。</p>
             </header>
 
-            <section class="review-list">
-                {reviews.map((review) => (
-                    <a class="review-card" href={`/reviews/${review.id}/`}>
-                        {review.data.cover ? (
-                            <img
-                                src={review.data.cover}
-                                alt=""
-                                loading="lazy"
-                            />
-                        ) : (
-                            <div class="cover-placeholder">
-                                {categoryLabels[review.data.category]}
-                            </div>
-                        )}
+            <div class="year-list">
+                {years.map((year) => (
+                    <section class="year-group">
+                        <h2 class="year-title">{year}</h2>
+                        <div class="review-list">
+                            {reviews
+                                .filter((review) => review.data.date.getFullYear() === year)
+                                .map((review) => (
+                                    <a class="review-card" href={`/reviews/${review.id}/`}>
+                                        {review.data.cover ? (
+                                            <img
+                                                src={review.data.cover}
+                                                alt=""
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div class="cover-placeholder">
+                                                {categoryLabels[review.data.category]}
+                                            </div>
+                                        )}
 
-                        <div class="review-body">
-                            <div class="review-title">
-                                <h2>{review.data.workTitle}</h2>
-                                {review.data.originalTitle && (
-                                    <p>{review.data.originalTitle}</p>
-                                )}
-                            </div>
+                                        <div class="review-body">
+                                            <div class="review-title">
+                                                <h3>{review.data.workTitle}</h3>
+                                                {review.data.originalTitle && (
+                                                    <p>{review.data.originalTitle}</p>
+                                                )}
+                                            </div>
 
-                            <div class="review-meta">
-                                <span>{categoryLabels[review.data.category]}</span>
-                                <span>{statusLabels[review.data.status]}</span>
-                                {review.data.year && <span>{review.data.year}</span>}
-                                {review.data.rating !== undefined && (
-                                    <span>{review.data.rating}/10</span>
-                                )}
-                            </div>
+                                            <div class="review-meta">
+                                                <span>{categoryLabels[review.data.category]}</span>
+                                                <span>{statusLabels[review.data.status]}</span>
+                                                {review.data.year && <span>{review.data.year}</span>}
+                                                {review.data.rating !== undefined && (
+                                                    <span>{review.data.rating}/10</span>
+                                                )}
+                                            </div>
 
-                            <p class="summary">{review.data.summary}</p>
+                                            <p class="summary">{review.data.summary}</p>
+                                        </div>
+                                    </a>
+                                ))}
                         </div>
-                    </a>
+                    </section>
                 ))}
-            </section>
+            </div>
         </main>
     </body>
 </html>
@@ -134,6 +145,16 @@ const statusLabels = {
         color: #4b5563;
     }
 
+    .year-list {
+        display: grid;
+        gap: 40px;
+    }
+
+    .year-title {
+        margin: 0 0 16px;
+        font-size: 28px;
+    }
+
     .review-list {
         display: grid;
         gap: 16px;
@@ -172,7 +193,7 @@ const statusLabels = {
         color: #6b7280;
     }
 
-    .review-title h2 {
+    .review-title h3 {
         margin: 0 0 6px;
         font-size: 24px;
     }

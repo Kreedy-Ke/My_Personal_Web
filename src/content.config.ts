@@ -7,8 +7,8 @@ const articles = defineCollection({
     schema: z.object({
         title: z.string(),
         date: z.coerce.date(),
+        writtenDate: z.coerce.date().optional(),
         summary: z.string(),
-        tags: z.array(z.string()).default([]),
         draft: z.boolean().default(false),
     }),
 });
@@ -29,7 +29,6 @@ const reviews = defineCollection({
         summary: z.string(),
         externalUrl: z.string().url().optional(),
         externalId: z.string().optional(),
-        tags: z.array(z.string()).default([]),
         draft: z.boolean().default(false),
     }),
 });
@@ -48,7 +47,6 @@ const galleries = defineCollection({
                 caption: z.string().optional(),
             }),
         ),
-        tags: z.array(z.string()).default([]),
         draft: z.boolean().default(false),
     }),
 });

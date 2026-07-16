@@ -13,7 +13,6 @@ images:
     - src: "https://picsum.photos/id/1035/1200/800"
       alt: "海边景色"
       caption: "第三张测试图片"
-tags: ["图片", "测试"]
 draft: false
 ---
 

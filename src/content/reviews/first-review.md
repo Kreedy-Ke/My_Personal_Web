@@ -11,7 +11,6 @@ status: "finished"
 summary: "这是第一条作品评价，用来测试 Reviews 内容系统。"
 externalUrl: "https://example.com"
 externalId: "test-work"
-tags: ["电影", "测试"]
 draft: false
 ---
 

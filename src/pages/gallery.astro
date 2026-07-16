@@ -6,6 +6,8 @@ const siteName = "My Personal Site";
 const galleries = (await getCollection("galleries", ({ data }) => {
     return data.draft !== true;
 })).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYear()))];
 ---
 
 <html lang="zh-CN">
@@ -25,24 +27,36 @@ const galleries = (await getCollection("galleries", ({ data }) => {
                 <p class="intro">摄影、截图、视觉记录和一些值得保存的画面。</p>
             </header>
 
-            <section class="gallery-grid">
-                {galleries.map((gallery) => (
-                    <a class="gallery-card" href={`/gallery/${gallery.id}/`}>
-                        <img
-                            src={gallery.data.cover ?? gallery.data.images[0]?.src}
-                            alt=""
-                            loading="lazy"
-                        />
-                        <div>
-                            <h2>{gallery.data.title}</h2>
-                            <p>{gallery.data.summary}</p>
-                            <time datetime={gallery.data.date.toISOString()}>
-                                {gallery.data.date.toLocaleDateString("zh-CN")}
-                            </time>
+            <div class="year-list">
+                {years.map((year) => (
+                    <section class="year-group">
+                        <h2 class="year-title">{year}</h2>
+                        <div class="gallery-grid">
+                            {galleries
+                                .filter((gallery) => gallery.data.date.getFullYear() === year)
+                                .map((gallery) => (
+                                    <a class="gallery-card" href={`/gallery/${gallery.id}/`}>
+                                        <img
+                                            src={gallery.data.cover ?? gallery.data.images[0]?.src}
+                                            alt=""
+                                            loading="lazy"
+                                        />
+                                        <div>
+                                            <h3>{gallery.data.title}</h3>
+                                            <p>{gallery.data.summary}</p>
+                                            <time datetime={gallery.data.date.toISOString()}>
+                                                {gallery.data.date.toLocaleDateString("zh-CN", {
+                                                    month: "2-digit",
+                                                    day: "2-digit",
+                                                })}
+                                            </time>
+                                        </div>
+                                    </a>
+                                ))}
                         </div>
-                    </a>
+                    </section>
                 ))}
-            </section>
+            </div>
         </main>
     </body>
 </html>
@@ -95,6 +109,16 @@ const galleries = (await getCollection("galleries", ({ data }) => {
         color: #4b5563;
     }
 
+    .year-list {
+        display: grid;
+        gap: 40px;
+    }
+
+    .year-title {
+        margin: 0 0 16px;
+        font-size: 28px;
+    }
+
     .gallery-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -126,7 +150,7 @@ const galleries = (await getCollection("galleries", ({ data }) => {
         padding: 18px;
     }
 
-    .gallery-card h2 {
+    .gallery-card h3 {
         margin: 0 0 8px;
         font-size: 22px;
     }
