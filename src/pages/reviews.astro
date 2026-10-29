@@ -1,7 +1,6 @@
 ---
 import { getCollection } from "astro:content";
-
-const siteName = "My Personal Site";
+import Layout from "../layouts/Layout.astro";
 
 const reviews = (await getCollection("reviews", ({ data }) => {
     return data.draft !== true;
@@ -30,108 +29,68 @@ const statusLabels = {
 };
 ---
 
-<html lang="zh-CN">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width" />
-        <title>Reviews | {siteName}</title>
-        <meta name="description" content="作品评价列表。" />
-    </head>
-    <body>
-        <main class="page-shell">
-            <a class="back-link" href="/">← Home</a>
+<Layout
+    title="Reviews"
+    description="作品评价列表。"
+    width="920px"
+    backHref="/"
+    backLabel="Home"
+>
+    <header>
+        <p class="eyebrow">Reviews</p>
+        <h1>作品评价</h1>
+        <p class="intro">书、电影、动画、游戏、音乐和其他作品的记录与评价。</p>
+    </header>
 
-            <header>
-                <p class="eyebrow">Reviews</p>
-                <h1>作品评价</h1>
-                <p class="intro">书、电影、动画、游戏、音乐和其他作品的记录与评价。</p>
-            </header>
+    <div class="year-list">
+        {years.map((year) => (
+            <section class="year-group">
+                <h2 class="year-title">{year}</h2>
+                <div class="review-list">
+                    {reviews
+                        .filter((review) => review.data.date.getFullYear() === year)
+                        .map((review) => (
+                            <a class="review-card" href={`/reviews/${review.id}/`}>
+                                {review.data.cover ? (
+                                    <img
+                                        src={review.data.cover}
+                                        alt=""
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <div class="cover-placeholder">
+                                        {categoryLabels[review.data.category]}
+                                    </div>
+                                )}
 
-            <div class="year-list">
-                {years.map((year) => (
-                    <section class="year-group">
-                        <h2 class="year-title">{year}</h2>
-                        <div class="review-list">
-                            {reviews
-                                .filter((review) => review.data.date.getFullYear() === year)
-                                .map((review) => (
-                                    <a class="review-card" href={`/reviews/${review.id}/`}>
-                                        {review.data.cover ? (
-                                            <img
-                                                src={review.data.cover}
-                                                alt=""
-                                                loading="lazy"
-                                            />
-                                        ) : (
-                                            <div class="cover-placeholder">
-                                                {categoryLabels[review.data.category]}
-                                            </div>
+                                <div class="review-body">
+                                    <div class="review-title">
+                                        <h3>{review.data.workTitle}</h3>
+                                        {review.data.originalTitle && (
+                                            <p>{review.data.originalTitle}</p>
                                         )}
+                                    </div>
 
-                                        <div class="review-body">
-                                            <div class="review-title">
-                                                <h3>{review.data.workTitle}</h3>
-                                                {review.data.originalTitle && (
-                                                    <p>{review.data.originalTitle}</p>
-                                                )}
-                                            </div>
+                                    <div class="review-meta">
+                                        <span>{categoryLabels[review.data.category]}</span>
+                                        <span>{statusLabels[review.data.status]}</span>
+                                        {review.data.year && <span>{review.data.year}</span>}
+                                        {review.data.rating !== undefined && (
+                                            <span>{review.data.rating}/10</span>
+                                        )}
+                                    </div>
 
-                                            <div class="review-meta">
-                                                <span>{categoryLabels[review.data.category]}</span>
-                                                <span>{statusLabels[review.data.status]}</span>
-                                                {review.data.year && <span>{review.data.year}</span>}
-                                                {review.data.rating !== undefined && (
-                                                    <span>{review.data.rating}/10</span>
-                                                )}
-                                            </div>
-
-                                            <p class="summary">{review.data.summary}</p>
-                                        </div>
-                                    </a>
-                                ))}
-                        </div>
-                    </section>
-                ))}
-            </div>
-        </main>
-    </body>
-</html>
+                                    <p class="summary">{review.data.summary}</p>
+                                </div>
+                            </a>
+                        ))}
+                </div>
+            </section>
+        ))}
+    </div>
+</Layout>
 
 <style>
-    :global(*) {
-        box-sizing: border-box;
-    }
-
-    :global(body) {
-        margin: 0;
-        min-height: 100vh;
-        font-family:
-            Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-            "Segoe UI", sans-serif;
-        color: #1f2933;
-        background: #f6f2ea;
-    }
-
-    .page-shell {
-        width: min(920px, calc(100% - 32px));
-        margin: 0 auto;
-        padding: 64px 0;
-    }
-
-    .back-link {
-        display: inline-block;
-        margin-bottom: 40px;
-        color: #4b5563;
-        text-decoration: none;
-    }
-
-    .eyebrow {
-        margin: 0 0 12px;
-        font-size: 14px;
-        text-transform: uppercase;
-        color: #6b7280;
-    }
-
     h1 {
         margin: 0;
         font-size: clamp(40px, 7vw, 72px);
@@ -173,7 +132,8 @@ const statusLabels = {
     }
 
     .review-card:hover {
-        border-color: #1f2933;
+        border-color: var(--accent-blue);
+        background: #fffaf1;
     }
 
     .review-card img,
