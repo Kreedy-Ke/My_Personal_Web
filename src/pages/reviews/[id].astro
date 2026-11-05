@@ -41,11 +41,14 @@ const statusLabels = {
     title={review.data.title}
     description={review.data.summary}
     width="860px"
-    backHref="/reviews/"
-    backLabel="Reviews"
 >
     <article>
-        <header class="review-header">
+        <header
+            class:list={[
+                "review-header",
+                { "review-header--without-cover": !review.data.cover },
+            ]}
+        >
             {review.data.cover && (
                 <img
                     src={review.data.cover}
@@ -99,6 +102,10 @@ const statusLabels = {
         margin-bottom: 48px;
     }
 
+    .review-header--without-cover {
+        grid-template-columns: 1fr;
+    }
+
     .review-header img {
         width: 180px;
         border-radius: 8px;
@@ -106,7 +113,7 @@ const statusLabels = {
 
     time,
     .original-title {
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     h1 {
@@ -129,23 +136,23 @@ const statusLabels = {
 
     .review-meta span {
         padding: 4px 8px;
-        border: 1px solid #d8d0c2;
+        border: 1px solid var(--border);
         border-radius: 999px;
         font-size: 14px;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .summary {
         margin: 0;
         font-size: 18px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .external-link {
         display: inline-block;
         margin-top: 18px;
-        color: #1f2933;
+        color: var(--text);
     }
 
     .content {

@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
+import { getArticleMeta } from "../../lib/articles";
 
 export async function getStaticPaths() {
     const articles = await getCollection("articles", ({ data }) => {
@@ -15,25 +16,24 @@ export async function getStaticPaths() {
 
 const { article } = Astro.props;
 const { Content } = await render(article);
-const writtenDate = article.data.writtenDate ?? article.data.date;
+const meta = getArticleMeta(article);
 const hasSeparateWrittenDate = article.data.writtenDate !== undefined;
 ---
 
 <Layout
-    title={article.data.title}
-    description={article.data.summary}
+    title={meta.title}
+    description={meta.summary}
     width="760px"
-    backHref="/articles/"
-    backLabel="Articles"
 >
     <article>
         <header>
+            <h1>{meta.title}</h1>
             <div class="date-line">
                 {hasSeparateWrittenDate ? (
                     <>
                         <span>
-                            写于 <time datetime={writtenDate.toISOString()}>
-                                {writtenDate.toLocaleDateString("zh-CN")}
+                            写于 <time datetime={meta.writtenAt.toISOString()}>
+                                {meta.writtenAt.toLocaleDateString("zh-CN")}
                             </time>
                         </span>
                         <span>
@@ -50,13 +50,27 @@ const hasSeparateWrittenDate = article.data.writtenDate !== undefined;
                     </span>
                 )}
             </div>
-            <h1>{article.data.title}</h1>
-            <p class="summary">{article.data.summary}</p>
+            {!meta.summaryFromBody && <p class="summary">{meta.summary}</p>}
         </header>
 
-        <div class="content">
+        <div
+            class:list={[
+                "content",
+                { "content--derived-title": meta.titleFromBody },
+            ]}
+        >
             <Content />
         </div>
+
+        {meta.tags.length > 0 && (
+            <footer class="article-footer" aria-label="文章标签">
+                <ul class="article-tags">
+                    {meta.tags.map((tag) => (
+                        <li>{tag}</li>
+                    ))}
+                </ul>
+            </footer>
+        )}
     </article>
 </Layout>
 
@@ -65,25 +79,56 @@ const hasSeparateWrittenDate = article.data.writtenDate !== undefined;
         display: flex;
         flex-wrap: wrap;
         gap: 8px 20px;
-        color: #6b7280;
+        margin-top: 4px;
+        color: var(--text-muted);
     }
 
     h1 {
-        margin: 16px 0;
+        margin: 0;
         font-size: clamp(38px, 6vw, 64px);
         line-height: 1.1;
     }
 
     .summary {
-        margin: 0 0 48px;
+        margin: 24px 0 0;
         font-size: 20px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
+    }
+
+    .article-footer {
+        margin-top: 48px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-soft);
+    }
+
+    .article-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .article-tags li {
+        padding: 3px 9px;
+        border: 1px solid color-mix(in srgb, var(--accent-blue) 38%, transparent);
+        border-radius: 999px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--text-muted);
+        background: var(--accent-soft);
     }
 
     .content {
+        margin-top: 40px;
         font-size: 18px;
         line-height: 1.9;
+    }
+
+    .content--derived-title :global(h1:first-child) {
+        display: none;
     }
 
     .content :global(p) {

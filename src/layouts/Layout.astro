@@ -5,17 +5,9 @@ interface Props {
     title?: string;
     description: string;
     width?: string;
-    backHref?: string;
-    backLabel?: string;
 }
 
-const {
-    title,
-    description,
-    width = "1280px",
-    backHref,
-    backLabel = "返回",
-} = Astro.props;
+const { title, description, width = "1280px" } = Astro.props;
 
 const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 const currentPath = Astro.url.pathname;
@@ -48,11 +40,39 @@ const navItems = [
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
+        <meta name="theme-color" content="#f6f2ea" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="generator" content={Astro.generator} />
         <meta name="description" content={description} />
         <title>{pageTitle}</title>
+        <script is:inline>
+            (() => {
+                const storageKey = "kreedy-theme";
+                const root = document.documentElement;
+                let storedTheme = null;
+
+                try {
+                    storedTheme = localStorage.getItem(storageKey);
+                } catch {
+                    // Storage can be unavailable in privacy-restricted contexts.
+                }
+
+                const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+                    ? "dark"
+                    : "light";
+                const theme =
+                    storedTheme === "light" || storedTheme === "dark"
+                        ? storedTheme
+                        : systemTheme;
+
+                root.dataset.theme = theme;
+                root.style.colorScheme = theme;
+                document
+                    .querySelector('meta[name="theme-color"]')
+                    ?.setAttribute("content", theme === "dark" ? "#12161e" : "#f6f2ea");
+            })();
+        </script>
     </head>
     <body>
         <header class="site-header">
@@ -77,6 +97,48 @@ const navItems = [
                         </a>
                     ))}
                 </nav>
+                <button
+                    class="theme-toggle"
+                    type="button"
+                    aria-label="暗黑模式"
+                    aria-pressed="false"
+                    title="切换到暗黑模式"
+                >
+                    <svg
+                        class="theme-icon theme-icon--moon"
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path
+                            d="M20.3 15.2A8.4 8.4 0 0 1 8.8 3.7 8.5 8.5 0 1 0 20.3 15.2Z"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                    <svg
+                        class="theme-icon theme-icon--sun"
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="4"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+                        <path
+                            d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -90,12 +152,73 @@ const navItems = [
             <div class="page-stage">
                 <div class="content-panel">
                     <div class="content-frame">
-                        {backHref && <a class="back-link" href={backHref}>{backLabel}</a>}
                         <slot />
                     </div>
                 </div>
             </div>
         </main>
+        <script is:inline>
+            (() => {
+                const storageKey = "kreedy-theme";
+                const root = document.documentElement;
+                const toggle = document.querySelector(".theme-toggle");
+                const themeColor = document.querySelector('meta[name="theme-color"]');
+                const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+                if (!toggle) {
+                    return;
+                }
+
+                const readStoredTheme = () => {
+                    try {
+                        const value = localStorage.getItem(storageKey);
+                        return value === "light" || value === "dark" ? value : null;
+                    } catch {
+                        return null;
+                    }
+                };
+
+                const updateControls = (theme) => {
+                    const isDark = theme === "dark";
+                    const label = isDark ? "切换到明亮模式" : "切换到暗黑模式";
+
+                    toggle.setAttribute("aria-pressed", String(isDark));
+                    toggle.setAttribute("title", label);
+                };
+
+                const applyTheme = (theme, persist = false) => {
+                    root.dataset.theme = theme;
+                    root.style.colorScheme = theme;
+                    updateControls(theme);
+                    themeColor?.setAttribute(
+                        "content",
+                        theme === "dark" ? "#12161e" : "#f6f2ea",
+                    );
+
+                    if (persist) {
+                        try {
+                            localStorage.setItem(storageKey, theme);
+                        } catch {
+                            // The visual preference still applies for this page.
+                        }
+                    }
+                };
+
+                const currentTheme = root.dataset.theme === "dark" ? "dark" : "light";
+                updateControls(currentTheme);
+
+                toggle.addEventListener("click", () => {
+                    const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
+                    applyTheme(nextTheme, true);
+                });
+
+                systemTheme.addEventListener("change", (event) => {
+                    if (!readStoredTheme()) {
+                        applyTheme(event.matches ? "dark" : "light");
+                    }
+                });
+            })();
+        </script>
     </body>
 </html>
 
@@ -107,10 +230,62 @@ const navItems = [
     :global(html) {
         --site-header-height: 68px;
         --accent-blue: #4683d1;
+        --accent-fill: #356fa8;
+        --accent-soft: #f1f6fc;
+        --accent-ring: #73a6c8;
         --accent-gradient: linear-gradient(90deg, #ef946d 0%, #7fb5df 52%, #4683d1 100%);
+        --page-bg: #f6f2ea;
+        --page-bg-92: rgb(246 242 234 / 92%);
+        --page-bg-52: rgb(246 242 234 / 52%);
+        --surface: #fffaf1;
+        --surface-muted: #f8f3e9;
+        --surface-hover: #f1f6fc;
+        --surface-rgb: 255 250 241;
+        --text: #1f2933;
+        --text-secondary: #4b5563;
+        --text-muted: #6b7280;
+        --on-accent: #fffaf1;
+        --border: #d8d0c2;
+        --border-strong: #ded6c8;
+        --border-soft: #e1d9cc;
+        --cover-bg: #e8dfcf;
+        --page-shadow: rgb(31 41 51 / 18%);
+        --header-shadow: rgb(31 41 51 / 5%);
+        --panel-shadow: rgb(42 40 71 / 7%);
+        --console-bg: #25364a;
+        --console-shadow: rgb(42 54 87 / 20%);
 
         min-width: 320px;
-        background: #f6f2ea;
+        background: var(--page-bg);
+        color: var(--text);
+    }
+
+    :global(html[data-theme="dark"]) {
+        color-scheme: dark;
+        --accent-blue: #81bdf4;
+        --accent-fill: #396f9f;
+        --accent-soft: #23364a;
+        --accent-ring: #7cb4e4;
+        --page-bg: #12161e;
+        --page-bg-92: rgb(18 22 30 / 92%);
+        --page-bg-52: rgb(18 22 30 / 52%);
+        --surface: #1d232d;
+        --surface-muted: #242b36;
+        --surface-hover: #293442;
+        --surface-rgb: 29 35 45;
+        --text: #edf2f8;
+        --text-secondary: #b5bfcc;
+        --text-muted: #929dab;
+        --on-accent: #f7fbff;
+        --border: #3b4552;
+        --border-strong: #434d5a;
+        --border-soft: #343d49;
+        --cover-bg: #2b333f;
+        --page-shadow: rgb(0 0 0 / 48%);
+        --header-shadow: rgb(0 0 0 / 28%);
+        --panel-shadow: rgb(0 0 0 / 26%);
+        --console-bg: #172535;
+        --console-shadow: rgb(0 0 0 / 35%);
     }
 
     :global(body) {
@@ -119,7 +294,8 @@ const navItems = [
         font-family:
             Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
             "Segoe UI", sans-serif;
-        color: #1f2933;
+        color: var(--text);
+        background: var(--page-bg);
     }
 
     .site-shell {
@@ -151,6 +327,10 @@ const navItems = [
         image-rendering: pixelated;
     }
 
+    :global(html[data-theme="dark"]) .side-backdrop::before {
+        filter: brightness(0.68) saturate(0.88);
+    }
+
     .side-backdrop--left {
         left: 0;
         --image-position: 30%;
@@ -175,8 +355,8 @@ const navItems = [
         z-index: 2;
         min-height: 100vh;
         padding: 48px 40px 72px;
-        background: #f6f2ea;
-        box-shadow: 0 22px 64px rgb(31 41 51 / 18%);
+        background: var(--page-bg);
+        box-shadow: 0 22px 64px var(--page-shadow);
     }
 
     .content-panel::before,
@@ -192,12 +372,12 @@ const navItems = [
 
     .content-panel::before {
         right: 100%;
-        background: linear-gradient(to left, #f6f2ea 0%, rgb(246 242 234 / 92%) 25%, rgb(246 242 234 / 52%) 62%, transparent 100%);
+        background: linear-gradient(to left, var(--page-bg) 0%, var(--page-bg-92) 25%, var(--page-bg-52) 62%, transparent 100%);
     }
 
     .content-panel::after {
         left: 100%;
-        background: linear-gradient(to right, #f6f2ea 0%, rgb(246 242 234 / 92%) 25%, rgb(246 242 234 / 52%) 62%, transparent 100%);
+        background: linear-gradient(to right, var(--page-bg) 0%, var(--page-bg-92) 25%, var(--page-bg-52) 62%, transparent 100%);
     }
 
     .content-frame {
@@ -212,9 +392,9 @@ const navItems = [
         width: 100%;
         height: var(--site-header-height);
         padding: 0 clamp(24px, 4vw, 64px);
-        border-bottom: 1px solid #ded6c8;
-        background: #f6f2ea;
-        box-shadow: 0 8px 24px rgb(31 41 51 / 5%);
+        border-bottom: 1px solid var(--border-strong);
+        background: var(--page-bg);
+        box-shadow: 0 8px 24px var(--header-shadow);
     }
 
     .site-header::after {
@@ -223,7 +403,7 @@ const navItems = [
         bottom: -1px;
         left: 0;
         height: 2px;
-        background: var(--accent-blue);
+        background: var(--accent-fill);
         content: "";
     }
 
@@ -242,7 +422,7 @@ const navItems = [
         min-width: max-content;
         align-items: center;
         gap: 12px;
-        color: #1f2933;
+        color: var(--text);
         text-decoration: none;
     }
 
@@ -251,12 +431,12 @@ const navItems = [
         width: 38px;
         height: 38px;
         flex: 0 0 auto;
-        border: 2px solid #f6f2ea;
+        border: 2px solid var(--page-bg);
         border-radius: 5px;
         object-fit: cover;
-        background: #fffaf1;
+        background: var(--surface);
         box-shadow:
-            0 0 0 2px #73a6c8,
+            0 0 0 2px var(--accent-ring),
             inset 0 0 0 2px rgb(255 255 255 / 12%);
     }
 
@@ -278,6 +458,48 @@ const navItems = [
         gap: 4px;
     }
 
+    .theme-toggle {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        place-items: center;
+        padding: 0;
+        border: 2px solid var(--page-bg);
+        border-radius: 5px;
+        color: var(--text-secondary);
+        background: var(--surface);
+        box-shadow:
+            0 0 0 2px var(--accent-ring),
+            inset 0 0 0 2px rgb(255 255 255 / 12%);
+        cursor: pointer;
+        transition:
+            color 160ms ease,
+            background 160ms ease,
+            transform 160ms ease;
+    }
+
+    .theme-toggle:hover {
+        color: var(--text);
+        background: var(--surface-hover);
+        transform: translateY(-1px);
+    }
+
+    .theme-toggle:active {
+        transform: translateY(0);
+    }
+
+    .theme-icon {
+        display: none;
+        width: 19px;
+        height: 19px;
+    }
+
+    :global(html:not([data-theme="dark"])) .theme-icon--moon,
+    :global(html[data-theme="dark"]) .theme-icon--sun {
+        display: block;
+    }
+
     .site-nav a {
         display: inline-flex;
         min-height: 34px;
@@ -287,7 +509,7 @@ const navItems = [
         border: 1px solid transparent;
         border-radius: 999px;
         font-size: 13px;
-        color: #4b5563;
+        color: var(--text-secondary);
         text-decoration: none;
         transition:
             border-color 160ms ease,
@@ -297,40 +519,26 @@ const navItems = [
 
     .site-nav a:hover {
         border-color: var(--accent-blue);
-        color: #1f2933;
+        color: var(--text);
         background: transparent;
     }
 
     .site-nav a[aria-current="page"] {
         border-color: transparent;
-        color: #fffaf1;
-        background: var(--accent-blue);
+        color: var(--on-accent);
+        background: var(--accent-fill);
         font-weight: 650;
-    }
-
-    .back-link {
-        display: inline-block;
-        margin-bottom: 40px;
-        color: #4b5563;
-        text-decoration: none;
-    }
-
-    .back-link:hover {
-        color: #1f2933;
-        text-decoration: underline;
-        text-decoration-color: var(--accent-blue);
-        text-underline-offset: 4px;
     }
 
     :global(.eyebrow) {
         margin: 0 0 12px;
         font-size: 14px;
         text-transform: uppercase;
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     :global(a:focus-visible) {
-        outline: 2px solid #1f2933;
+        outline: 2px solid var(--text);
         outline-offset: 4px;
     }
 
@@ -344,17 +552,31 @@ const navItems = [
         }
 
         .site-header-inner {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-rows: 1fr auto;
             align-items: center;
-            flex-direction: column;
-            justify-content: center;
             gap: 10px;
         }
 
+        .site-brand {
+            grid-row: 1;
+            grid-column: 1;
+            justify-self: start;
+        }
+
         .site-nav {
+            grid-row: 2;
+            grid-column: 1 / -1;
             position: static;
             justify-content: center;
             transform: none;
+        }
+
+        .theme-toggle {
+            grid-row: 1;
+            grid-column: 3;
+            justify-self: end;
         }
     }
 

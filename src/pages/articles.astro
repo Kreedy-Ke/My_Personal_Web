@@ -1,29 +1,32 @@
 ---
-import { getCollection, type CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
-
-const getWrittenDate = (article: CollectionEntry<"articles">) => {
-    return article.data.writtenDate ?? article.data.date;
-};
+import { getArticleMeta } from "../lib/articles";
 
 const articles = (await getCollection("articles", ({ data }) => {
     return data.draft !== true;
-})).sort((a, b) => getWrittenDate(b).valueOf() - getWrittenDate(a).valueOf());
+}))
+    .map((article) => ({
+        article,
+        meta: getArticleMeta(article),
+    }))
+    .sort((a, b) => b.meta.writtenAt.valueOf() - a.meta.writtenAt.valueOf());
 
-const years = [...new Set(articles.map((article) => getWrittenDate(article).getFullYear()))];
+const years = [...new Set(articles.map(({ meta }) => meta.writtenAt.getFullYear()))];
 ---
 
 <Layout
     title="Articles"
     description="文章和笔记列表。"
     width="860px"
-    backHref="/"
-    backLabel="Home"
 >
-    <header>
+    <header class="list-header">
         <p class="eyebrow">Articles</p>
-        <h1>文章</h1>
-        <p class="intro">文章、笔记、长文和一些持续整理的想法。</p>
+        <div class="title-row">
+            <h1>文章</h1>
+            <span class="title-divider" aria-hidden="true"></span>
+            <p class="intro">文章、笔记、长文和一些持续整理的想法。</p>
+        </div>
     </header>
 
     <div class="year-list">
@@ -32,20 +35,25 @@ const years = [...new Set(articles.map((article) => getWrittenDate(article).getF
                 <h2 class="year-title">{year}</h2>
                 <div class="article-list">
                     {articles
-                        .filter((article) => getWrittenDate(article).getFullYear() === year)
-                        .map((article) => (
+                        .filter(({ meta }) => meta.writtenAt.getFullYear() === year)
+                        .map(({ article, meta }) => (
                             <a class="article-card" href={`/articles/${article.id}/`}>
-                                <div>
-                                    <h3>{article.data.title}</h3>
-                                    <p>{article.data.summary}</p>
-                                </div>
-                                <time datetime={getWrittenDate(article).toISOString()}>
+                                <h3>{meta.title}</h3>
+                                <time datetime={meta.writtenAt.toISOString()}>
                                     {article.data.writtenDate && "写于 "}
-                                    {getWrittenDate(article).toLocaleDateString("zh-CN", {
+                                    {meta.writtenAt.toLocaleDateString("zh-CN", {
                                         month: "2-digit",
                                         day: "2-digit",
                                     })}
                                 </time>
+                                <p>{meta.summary}</p>
+                                {meta.tags.length > 0 && (
+                                    <ul class="article-tags" aria-label="文章标签">
+                                        {meta.tags.map((tag) => (
+                                            <li>{tag}</li>
+                                        ))}
+                                    </ul>
+                                )}
                             </a>
                         ))}
                 </div>
@@ -55,6 +63,27 @@ const years = [...new Set(articles.map((article) => getWrittenDate(article).getF
 </Layout>
 
 <style>
+    .list-header {
+        margin-bottom: 40px;
+    }
+
+    .list-header .eyebrow {
+        margin-bottom: 4px;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+    }
+
+    .title-divider {
+        width: 1px;
+        height: 46px;
+        flex: 0 0 auto;
+        background: var(--border-strong);
+    }
+
     h1 {
         margin: 0;
         font-size: clamp(40px, 7vw, 72px);
@@ -62,10 +91,10 @@ const years = [...new Set(articles.map((article) => getWrittenDate(article).getF
     }
 
     .intro {
-        margin: 24px 0 40px;
+        margin: 0;
         font-size: 20px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .year-list {
@@ -84,46 +113,76 @@ const years = [...new Set(articles.map((article) => getWrittenDate(article).getF
     }
 
     .article-card {
-        display: flex;
-        justify-content: space-between;
-        gap: 24px;
-        padding: 22px;
-        border: 1px solid #d8d0c2;
+        position: relative;
+        display: block;
+        padding: 22px 100px 22px 22px;
+        border: 1px solid var(--border);
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .article-card:hover {
         border-color: var(--accent-blue);
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .article-card h3 {
-        margin: 0 0 8px;
+        margin: 0;
         font-size: 24px;
     }
 
     .article-card p {
-        margin: 0;
-        color: #4b5563;
+        margin: 14px 0 0;
+        color: var(--text-secondary);
         line-height: 1.7;
     }
 
+    .article-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .article-tags li {
+        padding: 2px 8px;
+        border: 1px solid color-mix(in srgb, var(--accent-blue) 38%, transparent);
+        border-radius: 999px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: var(--text-muted);
+        background: var(--accent-soft);
+    }
+
     time {
-        flex: 0 0 auto;
-        color: #6b7280;
+        position: absolute;
+        top: 22px;
+        right: 22px;
+        color: var(--text-muted);
     }
 
     @media (max-width: 640px) {
+        .title-row {
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .title-divider {
+            display: none;
+        }
+
         .article-card {
-            display: block;
+            padding: 20px 88px 20px 20px;
         }
 
         time {
-            display: block;
-            margin-top: 16px;
+            top: 20px;
+            right: 20px;
         }
     }
 </style>

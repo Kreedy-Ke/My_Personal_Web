@@ -13,13 +13,14 @@ const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYe
     title="Gallery"
     description="图片集列表。"
     width="1080px"
-    backHref="/"
-    backLabel="Home"
 >
-    <header>
+    <header class="list-header">
         <p class="eyebrow">Gallery</p>
-        <h1>图片集</h1>
-        <p class="intro">摄影、截图、视觉记录和一些值得保存的画面。</p>
+        <div class="title-row">
+            <h1>图片集</h1>
+            <span class="title-divider" aria-hidden="true"></span>
+            <p class="intro">摄影、截图、视觉记录和一些值得保存的画面。</p>
+        </div>
     </header>
 
     <div class="year-list">
@@ -55,6 +56,27 @@ const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYe
 </Layout>
 
 <style>
+    .list-header {
+        margin-bottom: 40px;
+    }
+
+    .list-header .eyebrow {
+        margin-bottom: 4px;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+    }
+
+    .title-divider {
+        width: 1px;
+        height: 46px;
+        flex: 0 0 auto;
+        background: var(--border-strong);
+    }
+
     h1 {
         margin: 0;
         font-size: clamp(40px, 7vw, 72px);
@@ -62,10 +84,10 @@ const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYe
     }
 
     .intro {
-        margin: 24px 0 40px;
+        margin: 0;
         font-size: 20px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .year-list {
@@ -86,16 +108,16 @@ const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYe
 
     .gallery-card {
         overflow: hidden;
-        border: 1px solid #d8d0c2;
+        border: 1px solid var(--border);
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .gallery-card:hover {
         border-color: var(--accent-blue);
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .gallery-card img {
@@ -103,7 +125,7 @@ const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYe
         width: 100%;
         aspect-ratio: 4 / 3;
         object-fit: cover;
-        background: #e8dfcf;
+        background: var(--cover-bg);
     }
 
     .gallery-card div {
@@ -118,11 +140,11 @@ const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYe
     .gallery-card p {
         margin: 0 0 14px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     time {
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     @media (max-width: 860px) {
@@ -132,6 +154,16 @@ const years = [...new Set(galleries.map((gallery) => gallery.data.date.getFullYe
     }
 
     @media (max-width: 560px) {
+        .title-row {
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .title-divider {
+            display: none;
+        }
+
         .gallery-grid {
             grid-template-columns: 1fr;
         }

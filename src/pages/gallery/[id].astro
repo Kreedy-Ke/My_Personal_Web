@@ -21,8 +21,6 @@ const { Content } = await render(gallery);
     title={gallery.data.title}
     description={gallery.data.summary}
     width="1080px"
-    backHref="/gallery/"
-    backLabel="Gallery"
 >
     <article>
         <header>
@@ -54,7 +52,7 @@ const { Content } = await render(gallery);
 
 <style>
     time {
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     h1 {
@@ -68,7 +66,7 @@ const { Content } = await render(gallery);
         margin: 0 0 32px;
         font-size: 20px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .content {
@@ -90,10 +88,10 @@ const { Content } = await render(gallery);
     figure {
         break-inside: avoid;
         margin: 0 0 18px;
-        border: 1px solid #d8d0c2;
+        border: 1px solid var(--border);
         border-radius: 8px;
         overflow: hidden;
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     figure img {
@@ -104,7 +102,7 @@ const { Content } = await render(gallery);
 
     figcaption {
         padding: 12px 14px;
-        color: #4b5563;
+        color: var(--text-secondary);
         line-height: 1.6;
     }
 </style>

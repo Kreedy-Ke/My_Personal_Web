@@ -1,0 +1,19 @@
+{
+    "New personal site article": {
+        "scope": "markdown",
+        "prefix": "newarticle",
+        "description": "Create a minimal article with automatic date and generated title/summary",
+        "body": [
+            "---",
+            "tags: [${1:标签1}, ${2:标签2}]",
+            "date: \"${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}\"",
+            "---",
+            "",
+            "# ${3:文章标题}",
+            "",
+            "${4:从这里开始写正文。第一个正文段落会自动作为摘要。}",
+            "",
+            "$0"
+        ]
+    }
+}

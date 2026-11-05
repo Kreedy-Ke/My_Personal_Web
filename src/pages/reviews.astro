@@ -33,13 +33,14 @@ const statusLabels = {
     title="Reviews"
     description="作品评价列表。"
     width="920px"
-    backHref="/"
-    backLabel="Home"
 >
-    <header>
+    <header class="list-header">
         <p class="eyebrow">Reviews</p>
-        <h1>作品评价</h1>
-        <p class="intro">书、电影、动画、游戏、音乐和其他作品的记录与评价。</p>
+        <div class="title-row">
+            <h1>作品评价</h1>
+            <span class="title-divider" aria-hidden="true"></span>
+            <p class="intro">书、电影、动画、游戏、音乐和其他作品的记录与评价。</p>
+        </div>
     </header>
 
     <div class="year-list">
@@ -91,6 +92,27 @@ const statusLabels = {
 </Layout>
 
 <style>
+    .list-header {
+        margin-bottom: 40px;
+    }
+
+    .list-header .eyebrow {
+        margin-bottom: 4px;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+    }
+
+    .title-divider {
+        width: 1px;
+        height: 46px;
+        flex: 0 0 auto;
+        background: var(--border-strong);
+    }
+
     h1 {
         margin: 0;
         font-size: clamp(40px, 7vw, 72px);
@@ -98,10 +120,10 @@ const statusLabels = {
     }
 
     .intro {
-        margin: 24px 0 40px;
+        margin: 0;
         font-size: 20px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .year-list {
@@ -124,16 +146,16 @@ const statusLabels = {
         grid-template-columns: 112px 1fr;
         gap: 20px;
         padding: 18px;
-        border: 1px solid #d8d0c2;
+        border: 1px solid var(--border);
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .review-card:hover {
         border-color: var(--accent-blue);
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .review-card img,
@@ -142,7 +164,7 @@ const statusLabels = {
         height: 156px;
         border-radius: 6px;
         object-fit: cover;
-        background: #e8dfcf;
+        background: var(--cover-bg);
     }
 
     .cover-placeholder {
@@ -150,7 +172,7 @@ const statusLabels = {
         place-items: center;
         padding: 12px;
         text-align: center;
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     .review-title h3 {
@@ -160,7 +182,7 @@ const statusLabels = {
 
     .review-title p {
         margin: 0;
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     .review-meta {
@@ -172,19 +194,29 @@ const statusLabels = {
 
     .review-meta span {
         padding: 4px 8px;
-        border: 1px solid #d8d0c2;
+        border: 1px solid var(--border);
         border-radius: 999px;
         font-size: 14px;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .summary {
         margin: 0;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     @media (max-width: 640px) {
+        .title-row {
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .title-divider {
+            display: none;
+        }
+
         .review-card {
             grid-template-columns: 80px 1fr;
             gap: 14px;

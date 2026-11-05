@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import { SITE_NAME } from "../config";
 import Layout from "../layouts/Layout.astro";
+import { getArticleMeta } from "../lib/articles";
 
 type RecentUpdate = {
     title: string;
@@ -54,13 +55,17 @@ const stats = [
 ];
 
 const recentUpdates: RecentUpdate[] = [
-    ...articles.map((article) => ({
-        title: article.data.title,
-        href: `/articles/${article.id}/`,
-        type: "文章",
-        date: article.data.date,
-        summary: article.data.summary,
-    })),
+    ...articles.map((article) => {
+        const meta = getArticleMeta(article);
+
+        return {
+            title: meta.title,
+            href: `/articles/${article.id}/`,
+            type: "文章",
+            date: meta.publishedAt,
+            summary: meta.summary,
+        };
+    }),
     ...galleries.map((gallery) => ({
         title: gallery.data.title,
         href: `/gallery/${gallery.id}/`,
@@ -77,7 +82,7 @@ const recentUpdates: RecentUpdate[] = [
     })),
 ]
     .sort((a, b) => b.date.valueOf() - a.date.valueOf())
-    .slice(0, 5);
+    .slice(0, 10);
 ---
 
 <Layout
@@ -157,14 +162,20 @@ const recentUpdates: RecentUpdate[] = [
                 <h3 id="about-me-title">关于我</h3>
                 <p class="profile-greeting">你好，很高兴在这里见到你。</p>
                 <p>
-                    叫我柯苗苗或者苗吧。如果你偏好英文名，也可以叫我 Kreedy_Ke。
+                    叫我柯苗苗或者苗吧。
+                </p>
+                <p>
+                    如果你偏好英文名，也可以叫我 Kreedy_Ke。
                 </p>
             </section>
 
             <section class="profile-block" aria-labelledby="about-site-title">
                 <h3 id="about-site-title">关于这个网站</h3>
                 <p>
-                    这里是我长期维护的个人空间，用来保存文章、图片、作品评价，以及那些值得慢慢整理的想法。
+                    这里是我长期维护的个人空间，用来保存我的文章、图片、作品评价，
+                </p>
+                <p>
+                    以及那些值得我专门整理的想法。
                 </p>
                 <p>
                     网站会随着时间继续补充和调整，希望你能在这里找到感兴趣的内容。
@@ -181,13 +192,18 @@ const recentUpdates: RecentUpdate[] = [
             </div>
 
             {recentUpdates.length > 0 ? (
-                <div class="update-list">
+                <div
+                    class="update-list"
+                    tabindex="0"
+                    aria-label="最近更新列表，可在列表内滚动查看"
+                >
                     {recentUpdates.map((update) => (
                         <a class="update-item" href={update.href}>
                             <div class="update-meta">
                                 <span class="update-type">{update.type}</span>
                                 <time datetime={update.date.toISOString()}>
                                     {update.date.toLocaleDateString("zh-CN", {
+                                        year: "numeric",
                                         month: "2-digit",
                                         day: "2-digit",
                                     })}
@@ -195,7 +211,6 @@ const recentUpdates: RecentUpdate[] = [
                             </div>
                             <div class="update-copy">
                                 <h3>{update.title}</h3>
-                                <p>{update.summary}</p>
                             </div>
                         </a>
                     ))}
@@ -224,7 +239,7 @@ const recentUpdates: RecentUpdate[] = [
     </section>
 
     <footer class="welcome-footer">
-        <p>欢迎随便逛逛，希望这里有你感兴趣的内容。</p>
+        <p>晚上好，以及，What a nice day。</p>
     </footer>
 </Layout>
 
@@ -239,10 +254,10 @@ const recentUpdates: RecentUpdate[] = [
     .panel {
         position: relative;
         overflow: hidden;
-        border: 1px solid #d8d0c2;
+        border: 1px solid var(--border);
         border-radius: 12px;
-        background: #fffaf1;
-        box-shadow: 0 14px 36px rgb(42 40 71 / 7%);
+        background: var(--surface);
+        box-shadow: 0 14px 36px var(--panel-shadow);
     }
 
     .status-panel {
@@ -251,7 +266,7 @@ const recentUpdates: RecentUpdate[] = [
         flex-direction: column;
         justify-content: space-between;
         padding: 34px;
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .status-panel::before,
@@ -274,7 +289,7 @@ const recentUpdates: RecentUpdate[] = [
         font-size: 14px;
         letter-spacing: 0;
         text-transform: uppercase;
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     .eyebrow-line {
@@ -302,7 +317,7 @@ const recentUpdates: RecentUpdate[] = [
         margin: 24px 0 0;
         font-size: 18px;
         line-height: 1.7;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .stat-grid {
@@ -310,8 +325,8 @@ const recentUpdates: RecentUpdate[] = [
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 1px;
         margin: 34px -34px -34px;
-        border-top: 1px solid #ded6c8;
-        background: #ded6c8;
+        border-top: 1px solid var(--border-strong);
+        background: var(--border-strong);
     }
 
     .stat {
@@ -320,35 +335,35 @@ const recentUpdates: RecentUpdate[] = [
         padding: 18px 22px 20px;
         color: inherit;
         text-decoration: none;
-        background: rgb(255 250 241 / 94%);
+        background: rgb(var(--surface-rgb) / 94%);
         transition: background 160ms ease;
     }
 
     .stat:hover {
-        background: #f1f6fc;
+        background: var(--surface-hover);
     }
 
     .stat span {
         font-size: 12px;
         text-transform: uppercase;
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     .stat strong {
         font-size: 30px;
         font-weight: 600;
         line-height: 1;
-        color: #1f2933;
+        color: var(--text);
     }
 
     .console-panel {
         display: flex;
         min-height: 360px;
         flex-direction: column;
-        border-color: rgb(70 131 209 / 60%);
-        color: #f8f4ed;
-        background: #25364a;
-        box-shadow: 0 20px 44px rgb(42 54 87 / 20%);
+        border-color: color-mix(in srgb, var(--accent-blue) 60%, transparent);
+        color: var(--on-accent);
+        background: var(--console-bg);
+        box-shadow: 0 20px 44px var(--console-shadow);
     }
 
     .console-bar {
@@ -455,6 +470,8 @@ const recentUpdates: RecentUpdate[] = [
     }
 
     .dashboard {
+        --dashboard-card-height: 70px;
+
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px;
@@ -485,16 +502,16 @@ const recentUpdates: RecentUpdate[] = [
         height: 34px;
         flex: 0 0 auto;
         place-items: center;
-        border: 2px solid #f6f2ea;
+        border: 2px solid var(--page-bg);
         border-radius: 50%;
         font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
         font-size: 11px;
         font-weight: 700;
         line-height: 1;
-        color: #fffaf1;
-        background: var(--accent-blue);
+        color: var(--on-accent);
+        background: var(--accent-fill);
         box-shadow:
-            0 0 0 2px #73a6c8,
+            0 0 0 2px var(--accent-ring),
             0 0 0 5px rgb(127 181 223 / 12%);
     }
 
@@ -502,7 +519,7 @@ const recentUpdates: RecentUpdate[] = [
         margin-top: 16px;
         padding: 24px;
         scroll-margin-top: 32px;
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .profile-header {
@@ -511,7 +528,7 @@ const recentUpdates: RecentUpdate[] = [
         justify-content: space-between;
         gap: 24px;
         padding-bottom: 16px;
-        border-bottom: 1px solid #e1d9cc;
+        border-bottom: 1px solid var(--border-soft);
     }
 
     .profile-header .panel-heading {
@@ -539,7 +556,7 @@ const recentUpdates: RecentUpdate[] = [
     .profile-block + .profile-block {
         padding-right: 0;
         padding-left: 36px;
-        border-left: 1px solid #e1d9cc;
+        border-left: 1px solid var(--border-soft);
     }
 
     .profile-block h3 {
@@ -552,7 +569,7 @@ const recentUpdates: RecentUpdate[] = [
         margin: 0;
         font-size: 15px;
         line-height: 1.65;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .profile-block .profile-greeting {
@@ -561,23 +578,52 @@ const recentUpdates: RecentUpdate[] = [
         font-size: 18px;
         font-weight: 600;
         line-height: 1.5;
-        color: #1f2933;
+        color: var(--text);
     }
 
     .update-list {
         display: grid;
+        grid-auto-rows: var(--dashboard-card-height);
         gap: 8px;
+        max-height: 226px;
+        padding-right: 4px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-ring) transparent;
+    }
+
+    .update-list:focus-visible {
+        outline: 2px solid var(--accent-blue);
+        outline-offset: 4px;
+    }
+
+    .update-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .update-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .update-list::-webkit-scrollbar-thumb {
+        border: 2px solid transparent;
+        border-radius: 999px;
+        background: var(--accent-ring);
+        background-clip: padding-box;
     }
 
     .update-item {
         display: grid;
-        gap: 8px 12px;
+        gap: 4px 12px;
         padding: 13px 13px 14px;
-        border: 1px solid #e1d9cc;
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
-        background: #f8f3e9;
+        background: var(--surface-muted);
         transition:
             border-color 160ms ease,
             background 160ms ease,
@@ -586,7 +632,7 @@ const recentUpdates: RecentUpdate[] = [
 
     .update-item:hover {
         border-color: var(--accent-blue);
-        background: #fffaf1;
+        background: var(--surface);
         transform: translateY(-1px);
     }
 
@@ -599,22 +645,25 @@ const recentUpdates: RecentUpdate[] = [
 
     .update-type {
         padding: 2px 7px;
-        border: 1px solid rgb(70 131 209 / 28%);
+        border: 1px solid color-mix(in srgb, var(--accent-blue) 38%, transparent);
         border-radius: 999px;
         font-size: 10px;
-        color: #1f2933;
-        background: #f1f6fc;
+        color: var(--text);
+        background: var(--accent-soft);
     }
 
     .update-meta time {
         font-size: 11px;
-        color: #6b7280;
+        color: var(--text-muted);
     }
 
     .update-copy h3 {
         margin: 0 0 4px;
+        overflow: hidden;
         font-size: 16px;
-        line-height: 1.4;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .update-item:hover .update-copy h3 {
@@ -629,7 +678,7 @@ const recentUpdates: RecentUpdate[] = [
         overflow: hidden;
         font-size: 13px;
         line-height: 1.6;
-        color: #4b5563;
+        color: var(--text-secondary);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
@@ -637,23 +686,25 @@ const recentUpdates: RecentUpdate[] = [
     .empty-updates {
         display: block;
         padding: 18px;
-        border: 1px dashed #d8d0c2;
+        border: 1px dashed var(--border);
         border-radius: 8px;
     }
 
     .gate-list {
         display: grid;
+        grid-auto-rows: var(--dashboard-card-height);
         gap: 8px;
     }
 
     .gate-link {
         display: grid;
+        align-content: center;
         padding: 13px;
-        border: 1px solid #e1d9cc;
+        border: 1px solid var(--border-soft);
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
-        background: #f8f3e9;
+        background: var(--surface-muted);
         transition:
             border-color 160ms ease,
             background 160ms ease;
@@ -661,7 +712,7 @@ const recentUpdates: RecentUpdate[] = [
 
     .gate-link:hover {
         border-color: var(--accent-blue);
-        background: #fffaf1;
+        background: var(--surface);
     }
 
     .gate-copy {
@@ -670,13 +721,17 @@ const recentUpdates: RecentUpdate[] = [
     }
 
     .gate-copy strong {
-        font-size: 15px;
+        font-size: 16px;
     }
 
     .gate-copy small {
-        font-size: 12px;
-        line-height: 1.55;
-        color: #6b7280;
+        display: block;
+        overflow: hidden;
+        font-size: 13px;
+        line-height: 1.6;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-muted);
     }
 
     .welcome-footer {
@@ -685,9 +740,9 @@ const recentUpdates: RecentUpdate[] = [
         align-items: center;
         margin-top: 16px;
         padding: 20px 22px;
-        border: 1px dashed #d8d0c2;
+        border: 1px dashed var(--border);
         border-radius: 10px;
-        color: #4b5563;
+        color: var(--text-secondary);
     }
 
     .welcome-footer p {
@@ -727,7 +782,7 @@ const recentUpdates: RecentUpdate[] = [
         .profile-block + .profile-block {
             padding-top: 20px;
             padding-left: 0;
-            border-top: 1px solid #e1d9cc;
+            border-top: 1px solid var(--border-soft);
             border-left: 0;
         }
     }
