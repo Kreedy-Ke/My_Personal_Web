@@ -489,14 +489,19 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .review-browser {
+        --review-accent: #6fde92;
+        --review-ink: #173326;
+        --review-strong: #20583b;
+        --review-soft: #dff9e8;
+
         position: relative;
         margin-top: 43px;
         padding: 24px;
-        border: 1px solid var(--accent-fill);
-        border-radius: 2px 10px 10px 10px;
-        color: var(--on-accent);
-        background: var(--accent-fill);
-        box-shadow: 0 18px 42px color-mix(in srgb, var(--accent-fill) 32%, transparent);
+        border: 1px solid var(--review-accent);
+        border-radius: 0 0 10px 10px;
+        color: var(--review-ink);
+        background: var(--review-accent);
+        box-shadow: 0 18px 42px rgb(111 222 146 / 30%);
     }
 
     .review-browser[hidden],
@@ -522,7 +527,7 @@ import Layout from "../layouts/Layout.astro";
         left: -1px;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 4px;
+        gap: 0;
         margin: 0;
         padding: 0;
     }
@@ -532,31 +537,43 @@ import Layout from "../layouts/Layout.astro";
         min-width: 0;
         min-height: 41px;
         padding: 9px 16px 7px;
-        border: 1px solid color-mix(in srgb, var(--accent-blue) 42%, var(--border));
+        border: 1px solid color-mix(in srgb, var(--review-strong) 30%, transparent);
         border-bottom-color: transparent;
-        border-radius: 9px 9px 0 0;
-        color: var(--accent-fill);
-        background: var(--accent-soft);
+        border-radius: 0;
+        color: var(--review-strong);
+        background: color-mix(in srgb, var(--review-accent) 32%, white);
         box-shadow: inset 0 -10px 12px -12px rgb(0 0 0 / 24%);
         cursor: pointer;
     }
 
+    :global(.folder-main-tab:first-child) {
+        border-radius: 10px 0 0 0;
+    }
+
+    :global(.folder-main-tab:last-child) {
+        border-radius: 0 10px 0 0;
+    }
+
+    :global(.folder-main-tab + .folder-main-tab) {
+        border-left: 0;
+    }
+
     :global(.folder-main-tab:hover) {
-        border-color: var(--accent-blue);
-        color: var(--accent-blue);
-        background: var(--surface-hover);
+        border-color: var(--review-strong);
+        color: var(--review-ink);
+        background: var(--review-soft);
     }
 
     :global(.folder-main-tab[aria-pressed="true"]),
     :global(.folder-main-tab.is-active) {
         z-index: 1;
         margin-bottom: -1px;
-        border-color: var(--accent-fill) !important;
-        border-bottom-color: var(--accent-fill) !important;
-        color: var(--on-accent) !important;
-        background: var(--accent-fill) !important;
+        border-color: var(--review-accent) !important;
+        border-bottom-color: var(--review-accent) !important;
+        color: var(--review-ink) !important;
+        background: var(--review-accent) !important;
         font-weight: 650;
-        box-shadow: 0 -4px 12px color-mix(in srgb, var(--accent-fill) 28%, transparent);
+        box-shadow: 0 -4px 12px rgb(111 222 146 / 28%);
     }
 
     :global(.folder-main-tab[aria-pressed="true"]::after),
@@ -566,7 +583,7 @@ import Layout from "../layouts/Layout.astro";
         bottom: -2px;
         left: -1px;
         height: 4px;
-        background: var(--accent-fill);
+        background: var(--review-accent);
         content: "";
     }
 
@@ -575,10 +592,10 @@ import Layout from "../layouts/Layout.astro";
         min-height: 36px;
         margin-top: 7px;
         padding: 7px 14px 6px;
-        border: 1px solid rgb(255 255 255 / 28%);
+        border: 1px solid rgb(23 51 38 / 24%);
         border-radius: 0 7px 7px 7px;
-        color: var(--on-accent);
-        background: rgb(255 255 255 / 10%);
+        color: var(--review-strong);
+        background: rgb(255 255 255 / 30%);
         cursor: pointer;
         transition:
             border-color 160ms ease,
@@ -592,10 +609,10 @@ import Layout from "../layouts/Layout.astro";
         left: -1px;
         width: 44px;
         height: 8px;
-        border: 1px solid rgb(255 255 255 / 28%);
+        border: 1px solid rgb(23 51 38 / 24%);
         border-bottom: 0;
         border-radius: 6px 6px 0 0;
-        background: rgb(255 255 255 / 10%);
+        background: rgb(255 255 255 / 30%);
         content: "";
         transition:
             border-color 160ms ease,
@@ -603,20 +620,20 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .folder-tab:hover {
-        border-color: rgb(255 255 255 / 52%);
-        color: var(--on-accent);
-        background: rgb(255 255 255 / 18%);
+        border-color: var(--review-strong);
+        color: var(--review-ink);
+        background: rgb(255 255 255 / 48%);
     }
 
     .folder-tab[aria-pressed="true"] {
-        border-color: var(--on-accent);
-        color: var(--accent-fill);
-        background: var(--on-accent);
+        border-color: var(--review-strong);
+        color: white;
+        background: var(--review-strong);
     }
 
     .folder-tab[aria-pressed="true"]::before {
-        border-color: var(--on-accent);
-        background: var(--on-accent);
+        border-color: var(--review-strong);
+        background: var(--review-strong);
     }
 
     .folder-filters {
@@ -624,9 +641,9 @@ import Layout from "../layouts/Layout.astro";
         gap: 13px;
         margin-bottom: 28px;
         padding: 14px 16px 16px;
-        border: 1px solid rgb(255 255 255 / 17%);
+        border: 1px solid rgb(23 51 38 / 17%);
         border-radius: 8px;
-        background: rgb(255 255 255 / 7%);
+        background: rgb(255 255 255 / 20%);
     }
 
     .folder-row {
@@ -639,7 +656,7 @@ import Layout from "../layouts/Layout.astro";
     .folder-label {
         padding-top: 9px;
         font-size: 12px;
-        color: rgb(255 255 255 / 70%);
+        color: rgb(23 51 38 / 72%);
     }
 
     .review-results {
@@ -652,7 +669,7 @@ import Layout from "../layouts/Layout.astro";
         gap: 12px;
         margin-bottom: 14px;
         padding-bottom: 10px;
-        border-bottom: 1px solid rgb(255 255 255 / 22%);
+        border-bottom: 1px solid rgb(23 51 38 / 24%);
     }
 
     .group-header h2 {
@@ -662,7 +679,7 @@ import Layout from "../layouts/Layout.astro";
 
     .group-count {
         font-size: 13px;
-        color: rgb(255 255 255 / 72%);
+        color: rgb(23 51 38 / 70%);
     }
 
     .review-grid {
@@ -677,19 +694,19 @@ import Layout from "../layouts/Layout.astro";
         gap: 16px;
         min-width: 0;
         padding: 12px;
-        border: 1px solid rgb(255 255 255 / 18%);
+        border: 1px solid rgb(23 51 38 / 20%);
         border-radius: 8px;
-        color: var(--on-accent);
+        color: var(--review-ink);
         text-decoration: none;
-        background: rgb(255 255 255 / 8%);
+        background: rgb(255 255 255 / 36%);
         transition:
             border-color 160ms ease,
             background 160ms ease;
     }
 
     .review-card:hover {
-        border-color: rgb(255 255 255 / 42%);
-        background: rgb(255 255 255 / 13%);
+        border-color: var(--review-strong);
+        background: rgb(255 255 255 / 54%);
     }
 
     .cover-wrap {
@@ -697,7 +714,7 @@ import Layout from "../layouts/Layout.astro";
         aspect-ratio: 3 / 4;
         overflow: hidden;
         border-radius: 5px;
-        background: rgb(0 0 0 / 15%);
+        background: rgb(23 51 38 / 16%);
     }
 
     .cover-wrap img {
@@ -715,7 +732,7 @@ import Layout from "../layouts/Layout.astro";
         padding: 8px;
         text-align: center;
         font-size: 11px;
-        color: rgb(255 255 255 / 68%);
+        color: rgb(23 51 38 / 68%);
     }
 
     .cover-placeholder[hidden] {
@@ -745,15 +762,15 @@ import Layout from "../layouts/Layout.astro";
         padding: 3px 8px;
         border-radius: 999px;
         font-size: 12px;
-        color: var(--accent-fill);
-        background: var(--on-accent);
+        color: white;
+        background: var(--review-strong);
     }
 
     .original-title {
         margin: 5px 0 0;
         overflow-wrap: anywhere;
         font-size: 12px;
-        color: rgb(255 255 255 / 66%);
+        color: rgb(23 51 38 / 68%);
     }
 
     .review-meta {
@@ -765,16 +782,16 @@ import Layout from "../layouts/Layout.astro";
 
     .review-meta span {
         padding: 3px 8px;
-        border: 1px solid rgb(255 255 255 / 20%);
+        border: 1px solid rgb(23 51 38 / 22%);
         border-radius: 999px;
         font-size: 11px;
-        color: rgb(255 255 255 / 78%);
-        background: rgb(255 255 255 / 8%);
+        color: rgb(23 51 38 / 82%);
+        background: rgb(255 255 255 / 26%);
     }
 
     .review-meta .region-badge {
-        border-color: rgb(255 255 255 / 42%);
-        color: var(--on-accent);
+        border-color: var(--review-strong);
+        color: var(--review-strong);
     }
 
     .review-meta [hidden] {
@@ -784,11 +801,11 @@ import Layout from "../layouts/Layout.astro";
     .empty-result {
         margin: 0;
         padding: 28px;
-        border: 1px dashed rgb(255 255 255 / 38%);
+        border: 1px dashed rgb(23 51 38 / 30%);
         border-radius: 8px;
         text-align: center;
-        color: rgb(255 255 255 / 76%);
-        background: rgb(255 255 255 / 6%);
+        color: rgb(23 51 38 / 76%);
+        background: rgb(255 255 255 / 24%);
     }
 
     .review-pagination {
@@ -806,16 +823,16 @@ import Layout from "../layouts/Layout.astro";
     .review-pagination button {
         min-height: 32px;
         padding: 4px 10px;
-        border: 1px solid rgb(255 255 255 / 28%);
+        border: 1px solid rgb(23 51 38 / 28%);
         border-radius: 6px;
-        color: var(--on-accent);
-        background: rgb(255 255 255 / 8%);
+        color: var(--review-ink);
+        background: rgb(255 255 255 / 32%);
         cursor: pointer;
     }
 
     .review-pagination button:hover:not(:disabled) {
-        border-color: rgb(255 255 255 / 55%);
-        background: rgb(255 255 255 / 15%);
+        border-color: var(--review-strong);
+        background: rgb(255 255 255 / 48%);
     }
 
     .review-pagination button:disabled {
@@ -831,9 +848,9 @@ import Layout from "../layouts/Layout.astro";
     }
 
     :global(.page-number[aria-current="page"]) {
-        border-color: var(--on-accent);
-        color: var(--accent-fill);
-        background: var(--on-accent);
+        border-color: var(--review-strong);
+        color: white;
+        background: var(--review-strong);
         font-weight: 650;
     }
 
