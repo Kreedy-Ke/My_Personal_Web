@@ -61,6 +61,7 @@ import Layout from "../../layouts/Layout.astro";
                     <h3></h3>
                     <p class="original-title"></p>
                     <p class="subject-id"></p>
+                    <p class="bangumi-rating"></p>
                 </div>
             </div>
             <div class="editor-fields">
@@ -85,6 +86,7 @@ import Layout from "../../layouts/Layout.astro";
         cover: string;
         id: number;
         originalTitle: string;
+        rating: number;
         title: string;
     };
 
@@ -150,6 +152,7 @@ import Layout from "../../layouts/Layout.astro";
                 const title = form.querySelector<HTMLElement>("h3");
                 const originalTitle = form.querySelector<HTMLElement>(".original-title");
                 const subjectId = form.querySelector<HTMLElement>(".subject-id");
+                const bangumiRating = form.querySelector<HTMLElement>(".bangumi-rating");
                 const scoreInput = form.querySelector<HTMLInputElement>('input[type="number"]');
                 const commentInput = form.querySelector<HTMLInputElement>('input[type="text"]');
                 const saveState = form.querySelector<HTMLElement>(".save-state");
@@ -158,6 +161,7 @@ import Layout from "../../layouts/Layout.astro";
                 title.textContent = item.title;
                 originalTitle.textContent = item.originalTitle;
                 subjectId.textContent = `Bangumi ID: ${item.id}`;
+                bangumiRating.textContent = `我的 Bangumi 评分：${item.rating} / 10`;
                 scoreInput.value = note?.score?.toString() ?? "";
                 commentInput.value = note?.comment ?? "";
 
@@ -409,6 +413,15 @@ import Layout from "../../layouts/Layout.astro";
         margin: 3px 0 0;
         font-size: 11px;
         color: var(--text-muted);
+    }
+
+    .editor-work .bangumi-rating {
+        display: inline-block;
+        margin-top: 7px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        color: var(--accent-fill);
+        background: var(--accent-soft);
     }
 
     .editor-fields {
