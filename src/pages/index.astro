@@ -36,6 +36,10 @@ const [articles, galleries, reviews] = await Promise.all([
     getCollection("reviews", ({ data }) => data.draft !== true),
 ]);
 
+const galleryImageCount = galleries.reduce((total, gallery) => {
+    return total + gallery.data.images.length;
+}, 0);
+
 const stats = [
     {
         label: "Articles",
@@ -43,8 +47,8 @@ const stats = [
         href: "/articles/",
     },
     {
-        label: "Galleries",
-        value: galleries.length,
+        label: "Images",
+        value: galleryImageCount,
         href: "/gallery/",
     },
     {
@@ -66,13 +70,6 @@ const recentUpdates: RecentUpdate[] = [
             summary: meta.summary,
         };
     }),
-    ...galleries.map((gallery) => ({
-        title: gallery.data.title,
-        href: `/gallery/${gallery.id}/`,
-        type: "图片集",
-        date: gallery.data.date,
-        summary: gallery.data.summary,
-    })),
     ...reviews.map((review) => ({
         title: review.data.workTitle,
         href: `/reviews/${review.id}/`,
@@ -129,7 +126,7 @@ const recentUpdates: RecentUpdate[] = [
                 <div class="console-lines">
                     <p><span>STATUS</span> ONLINE</p>
                     <p><span>SECTIONS</span> 03</p>
-                    <p><span>ENTRIES</span> {String(articles.length + galleries.length + reviews.length).padStart(2, "0")}</p>
+                    <p><span>ENTRIES</span> {String(articles.length + galleryImageCount + reviews.length).padStart(2, "0")}</p>
                     <p>
                         <span>LAST_SIGNAL</span>
                         {recentUpdates[0]

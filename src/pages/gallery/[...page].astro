@@ -1,0 +1,192 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+export async function getStaticPaths({ paginate }) {
+    const galleries = (await getCollection("galleries", ({ data }) => {
+        return data.draft !== true;
+    })).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+    const images = galleries.flatMap((gallery) => {
+        return gallery.data.images.map((image) => ({
+            ...image,
+            galleryId: gallery.id,
+        }));
+    });
+
+    return paginate(images, {
+        pageSize: 12,
+    });
+}
+
+const { page } = Astro.props;
+---
+
+<Layout
+    title="Gallery"
+    description="摄影、截图，以及一些想留下的画面。"
+    width="1080px"
+>
+    <header class="list-header">
+        <p class="eyebrow">Gallery</p>
+        <div class="title-row">
+            <h1>图片集</h1>
+            <span class="title-divider" aria-hidden="true"></span>
+            <p class="intro">摄影、截图，以及一些想留下的画面。</p>
+        </div>
+    </header>
+
+    <section class="gallery-grid" aria-label="图片列表">
+        {page.data.map((image, index) => (
+            <figure class="gallery-item">
+                <img
+                    src={image.src}
+                    alt={image.alt ?? ""}
+                    loading={page.currentPage === 1 && index < 3 ? "eager" : "lazy"}
+                />
+            </figure>
+        ))}
+    </section>
+
+    {page.lastPage > 1 && (
+        <nav class="pagination" aria-label="图片分页">
+            {page.url.prev ? (
+                <a href={page.url.prev}>上一页</a>
+            ) : (
+                <span class="disabled" aria-disabled="true">上一页</span>
+            )}
+            <span class="page-status">
+                第 {page.currentPage} / {page.lastPage} 页
+            </span>
+            {page.url.next ? (
+                <a href={page.url.next}>下一页</a>
+            ) : (
+                <span class="disabled" aria-disabled="true">下一页</span>
+            )}
+        </nav>
+    )}
+</Layout>
+
+<style>
+    .list-header {
+        margin-bottom: 32px;
+    }
+
+    .list-header .eyebrow {
+        margin-bottom: 4px;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+    }
+
+    .title-divider {
+        width: 1px;
+        height: 46px;
+        flex: 0 0 auto;
+        background: var(--border-strong);
+    }
+
+    h1 {
+        margin: 0;
+        font-size: clamp(40px, 7vw, 72px);
+        line-height: 1;
+    }
+
+    .intro {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.7;
+        color: var(--text-secondary);
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        align-items: start;
+    }
+
+    .gallery-item {
+        margin: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: var(--cover-bg);
+    }
+
+    .gallery-item img {
+        display: block;
+        width: 100%;
+        height: auto;
+        transition: opacity 160ms ease;
+    }
+
+    .gallery-item:hover img {
+        opacity: 0.88;
+    }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 32px;
+    }
+
+    .pagination a,
+    .pagination .disabled {
+        display: inline-flex;
+        min-width: 76px;
+        min-height: 34px;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 12px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        background: var(--surface);
+    }
+
+    .pagination a:hover {
+        border-color: var(--accent-blue);
+        color: var(--text);
+        background: var(--surface-hover);
+    }
+
+    .pagination .disabled {
+        opacity: 0.42;
+    }
+
+    .page-status {
+        min-width: 84px;
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 860px) {
+        .gallery-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 560px) {
+        .title-row {
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .title-divider {
+            display: none;
+        }
+
+        .gallery-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
