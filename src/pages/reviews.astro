@@ -25,6 +25,12 @@ import Layout from "../layouts/Layout.astro";
     <p class="review-state" data-review-state role="status">
         正在从 Bangumi 获取收藏……
     </p>
+    <nav
+        class="category-tabs"
+        data-category-tabs
+        aria-label="作品分类"
+        hidden
+    ></nav>
     <div class="review-groups" data-review-groups hidden></div>
 
     <template data-group-template>
@@ -61,6 +67,7 @@ import Layout from "../layouts/Layout.astro";
     (() => {
         const state = document.querySelector<HTMLElement>("[data-review-state]");
         const groups = document.querySelector<HTMLElement>("[data-review-groups]");
+        const categoryTabs = document.querySelector<HTMLElement>("[data-category-tabs]");
         const groupTemplate = document.querySelector<HTMLTemplateElement>(
             "[data-group-template]",
         );
@@ -72,7 +79,14 @@ import Layout from "../layouts/Layout.astro";
         );
         const syncTime = document.querySelector<HTMLElement>("[data-sync-time]");
 
-        if (!state || !groups || !groupTemplate || !cardTemplate || !syncTime) {
+        if (
+            !state ||
+            !groups ||
+            !categoryTabs ||
+            !groupTemplate ||
+            !cardTemplate ||
+            !syncTime
+        ) {
             return;
         }
 
@@ -136,6 +150,10 @@ import Layout from "../layouts/Layout.astro";
             }[];
         }) => {
             groups.replaceChildren();
+            categoryTabs.replaceChildren();
+
+            const sections: HTMLElement[] = [];
+            const buttons: HTMLButtonElement[] = [];
 
             for (const category of payload.categories) {
                 if (category.items.length === 0) {
@@ -146,14 +164,32 @@ import Layout from "../layouts/Layout.astro";
                 const heading = section.querySelector<HTMLElement>("h2");
                 const count = section.querySelector<HTMLElement>(".group-count");
                 const grid = section.querySelector<HTMLElement>(".review-grid");
+                const button = document.createElement("button");
+                const sectionIndex = sections.length;
 
                 heading.textContent = category.label;
                 count.textContent = `${category.items.length} 部`;
+                button.type = "button";
+                button.textContent = `${category.label} ${category.items.length}`;
+                button.setAttribute("aria-pressed", String(sectionIndex === 0));
+                section.hidden = sectionIndex > 0;
 
                 for (const item of category.items) {
                     grid.append(createCard(item));
                 }
 
+                button.addEventListener("click", () => {
+                    sections.forEach((item, index) => {
+                        item.hidden = index !== sectionIndex;
+                    });
+                    buttons.forEach((item) => {
+                        item.setAttribute("aria-pressed", String(item === button));
+                    });
+                });
+
+                categoryTabs.append(button);
+                buttons.push(button);
+                sections.push(section);
                 groups.append(section);
             }
 
@@ -164,6 +200,7 @@ import Layout from "../layouts/Layout.astro";
             const hasItems = groups.childElementCount > 0;
             state.hidden = hasItems;
             groups.hidden = !hasItems;
+            categoryTabs.hidden = !hasItems;
 
             if (!hasItems) {
                 showMessage("Bangumi 中暂无已评分的动画、漫画或轻小说。");
@@ -254,6 +291,40 @@ import Layout from "../layouts/Layout.astro";
     .review-groups {
         display: grid;
         gap: 36px;
+    }
+
+    .category-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 24px;
+    }
+
+    .category-tabs button {
+        min-height: 32px;
+        padding: 4px 13px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--text-secondary);
+        background: var(--surface);
+        cursor: pointer;
+    }
+
+    .category-tabs button:hover {
+        border-color: var(--accent-blue);
+        color: var(--text);
+        background: var(--surface-hover);
+    }
+
+    .category-tabs button[aria-pressed="true"] {
+        border-color: var(--accent-fill);
+        color: var(--on-accent);
+        background: var(--accent-fill);
+    }
+
+    .category-tabs[hidden],
+    .review-group[hidden] {
+        display: none;
     }
 
     .group-header {
