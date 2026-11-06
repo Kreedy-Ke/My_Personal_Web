@@ -100,6 +100,16 @@ import Layout from "../layouts/Layout.astro";
                 <p class="empty-result" data-empty-result hidden>
                     当前筛选条件下没有作品。
                 </p>
+                <nav
+                    class="review-pagination"
+                    data-review-pagination
+                    aria-label="作品分页"
+                    hidden
+                >
+                    <button type="button" data-page-prev>上一页</button>
+                    <div class="page-numbers" data-page-numbers></div>
+                    <button type="button" data-page-next>下一页</button>
+                </nav>
             </section>
         </div>
     </section>
@@ -169,6 +179,10 @@ import Layout from "../layouts/Layout.astro";
         const activeTitle = document.querySelector<HTMLElement>("[data-active-title]");
         const activeCount = document.querySelector<HTMLElement>("[data-active-count]");
         const emptyResult = document.querySelector<HTMLElement>("[data-empty-result]");
+        const pagination = document.querySelector<HTMLElement>("[data-review-pagination]");
+        const pageNumbers = document.querySelector<HTMLElement>("[data-page-numbers]");
+        const pagePrev = document.querySelector<HTMLButtonElement>("[data-page-prev]");
+        const pageNext = document.querySelector<HTMLButtonElement>("[data-page-next]");
         const cardTemplate = document.querySelector<HTMLTemplateElement>("[data-card-template]");
         const profileLink = document.querySelector<HTMLAnchorElement>("[data-profile-link]");
         const syncTime = document.querySelector<HTMLElement>("[data-sync-time]");
@@ -184,17 +198,23 @@ import Layout from "../layouts/Layout.astro";
             !activeTitle ||
             !activeCount ||
             !emptyResult ||
+            !pagination ||
+            !pageNumbers ||
+            !pagePrev ||
+            !pageNext ||
             !cardTemplate ||
             !syncTime
         ) {
             return;
         }
 
+        const PAGE_SIZE = 20;
         let categories: Category[] = [];
         let activeCategory = "";
         let region = "japan";
         let completion = "all";
         let status = "all";
+        let currentPage = 1;
 
         const setButtonPressed = (container: HTMLElement, selected: HTMLButtonElement) => {
             container.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
@@ -275,15 +295,44 @@ import Layout from "../layouts/Layout.astro";
 
                 return matchesRegion && matchesCompletion && matchesStatus;
             });
+            const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+            currentPage = Math.min(currentPage, totalPages);
+            const pageItems = items.slice(
+                (currentPage - 1) * PAGE_SIZE,
+                currentPage * PAGE_SIZE,
+            );
 
             grid.replaceChildren();
             activeTitle.textContent = category.label;
-            activeCount.textContent = `${items.length} 部`;
+            activeCount.textContent = `${items.length} 部 · 第 ${currentPage} / ${totalPages} 页`;
             emptyResult.hidden = items.length > 0;
+            pagination.hidden = items.length === 0 || totalPages === 1;
 
-            for (const item of items) {
+            for (const item of pageItems) {
                 grid.append(createCard(item));
             }
+
+            pageNumbers.replaceChildren();
+
+            for (let page = 1; page <= totalPages; page += 1) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "page-number";
+                button.textContent = String(page);
+                button.setAttribute("aria-label", `第 ${page} 页`);
+                button.setAttribute(
+                    "aria-current",
+                    page === currentPage ? "page" : "false",
+                );
+                button.addEventListener("click", () => {
+                    currentPage = page;
+                    renderResults();
+                });
+                pageNumbers.append(button);
+            }
+
+            pagePrev.disabled = currentPage === 1;
+            pageNext.disabled = currentPage === totalPages;
         };
 
         const renderCategoryTabs = () => {
@@ -298,6 +347,7 @@ import Layout from "../layouts/Layout.astro";
                 button.classList.toggle("is-active", index === 0);
                 button.addEventListener("click", () => {
                     activeCategory = category.key;
+                    currentPage = 1;
                     setButtonPressed(categoryTabs, button);
                     renderResults();
                 });
@@ -315,6 +365,7 @@ import Layout from "../layouts/Layout.astro";
             container.querySelectorAll<HTMLButtonElement>(`[data-${attribute}]`).forEach((button) => {
                 button.addEventListener("click", () => {
                     apply(button.dataset[attribute] ?? "all");
+                    currentPage = 1;
                     setButtonPressed(container, button);
                     renderResults();
                 });
@@ -329,6 +380,16 @@ import Layout from "../layouts/Layout.astro";
         });
         bindFilterGroup(statusTabs, "status", (value) => {
             status = value;
+        });
+
+        pagePrev.addEventListener("click", () => {
+            currentPage = Math.max(1, currentPage - 1);
+            renderResults();
+        });
+
+        pageNext.addEventListener("click", () => {
+            currentPage += 1;
+            renderResults();
         });
 
         fetch("/api/bangumi", {
@@ -431,10 +492,11 @@ import Layout from "../layouts/Layout.astro";
         position: relative;
         margin-top: 43px;
         padding: 24px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--accent-fill);
         border-radius: 2px 10px 10px 10px;
-        background: var(--surface);
-        box-shadow: 0 14px 36px var(--panel-shadow);
+        color: var(--on-accent);
+        background: var(--accent-fill);
+        box-shadow: 0 18px 42px color-mix(in srgb, var(--accent-fill) 32%, transparent);
     }
 
     .review-browser[hidden],
@@ -513,10 +575,10 @@ import Layout from "../layouts/Layout.astro";
         min-height: 36px;
         margin-top: 7px;
         padding: 7px 14px 6px;
-        border: 1px solid color-mix(in srgb, var(--accent-blue) 35%, var(--border));
+        border: 1px solid rgb(255 255 255 / 28%);
         border-radius: 0 7px 7px 7px;
-        color: var(--accent-fill);
-        background: var(--accent-soft);
+        color: var(--on-accent);
+        background: rgb(255 255 255 / 10%);
         cursor: pointer;
         transition:
             border-color 160ms ease,
@@ -530,10 +592,10 @@ import Layout from "../layouts/Layout.astro";
         left: -1px;
         width: 44px;
         height: 8px;
-        border: 1px solid color-mix(in srgb, var(--accent-blue) 35%, var(--border));
+        border: 1px solid rgb(255 255 255 / 28%);
         border-bottom: 0;
         border-radius: 6px 6px 0 0;
-        background: var(--accent-soft);
+        background: rgb(255 255 255 / 10%);
         content: "";
         transition:
             border-color 160ms ease,
@@ -541,20 +603,20 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .folder-tab:hover {
-        border-color: var(--accent-blue);
-        color: var(--text);
-        background: var(--surface-hover);
+        border-color: rgb(255 255 255 / 52%);
+        color: var(--on-accent);
+        background: rgb(255 255 255 / 18%);
     }
 
     .folder-tab[aria-pressed="true"] {
-        border-color: var(--accent-fill);
-        color: var(--on-accent);
-        background: var(--accent-fill);
+        border-color: var(--on-accent);
+        color: var(--accent-fill);
+        background: var(--on-accent);
     }
 
     .folder-tab[aria-pressed="true"]::before {
-        border-color: var(--accent-fill);
-        background: var(--accent-fill);
+        border-color: var(--on-accent);
+        background: var(--on-accent);
     }
 
     .folder-filters {
@@ -562,9 +624,9 @@ import Layout from "../layouts/Layout.astro";
         gap: 13px;
         margin-bottom: 28px;
         padding: 14px 16px 16px;
-        border: 1px solid var(--border);
+        border: 1px solid rgb(255 255 255 / 17%);
         border-radius: 8px;
-        background: var(--surface-muted);
+        background: rgb(255 255 255 / 7%);
     }
 
     .folder-row {
@@ -577,7 +639,7 @@ import Layout from "../layouts/Layout.astro";
     .folder-label {
         padding-top: 9px;
         font-size: 12px;
-        color: var(--text-muted);
+        color: rgb(255 255 255 / 70%);
     }
 
     .review-results {
@@ -590,7 +652,7 @@ import Layout from "../layouts/Layout.astro";
         gap: 12px;
         margin-bottom: 14px;
         padding-bottom: 10px;
-        border-bottom: 1px solid var(--border-soft);
+        border-bottom: 1px solid rgb(255 255 255 / 22%);
     }
 
     .group-header h2 {
@@ -600,7 +662,7 @@ import Layout from "../layouts/Layout.astro";
 
     .group-count {
         font-size: 13px;
-        color: var(--text-muted);
+        color: rgb(255 255 255 / 72%);
     }
 
     .review-grid {
@@ -615,19 +677,19 @@ import Layout from "../layouts/Layout.astro";
         gap: 16px;
         min-width: 0;
         padding: 12px;
-        border: 1px solid var(--border);
+        border: 1px solid rgb(255 255 255 / 18%);
         border-radius: 8px;
-        color: inherit;
+        color: var(--on-accent);
         text-decoration: none;
-        background: var(--surface);
+        background: rgb(255 255 255 / 8%);
         transition:
             border-color 160ms ease,
             background 160ms ease;
     }
 
     .review-card:hover {
-        border-color: var(--accent-blue);
-        background: var(--surface-hover);
+        border-color: rgb(255 255 255 / 42%);
+        background: rgb(255 255 255 / 13%);
     }
 
     .cover-wrap {
@@ -635,7 +697,7 @@ import Layout from "../layouts/Layout.astro";
         aspect-ratio: 3 / 4;
         overflow: hidden;
         border-radius: 5px;
-        background: var(--cover-bg);
+        background: rgb(0 0 0 / 15%);
     }
 
     .cover-wrap img {
@@ -653,7 +715,7 @@ import Layout from "../layouts/Layout.astro";
         padding: 8px;
         text-align: center;
         font-size: 11px;
-        color: var(--text-muted);
+        color: rgb(255 255 255 / 68%);
     }
 
     .cover-placeholder[hidden] {
@@ -683,15 +745,15 @@ import Layout from "../layouts/Layout.astro";
         padding: 3px 8px;
         border-radius: 999px;
         font-size: 12px;
-        color: var(--on-accent);
-        background: var(--accent-fill);
+        color: var(--accent-fill);
+        background: var(--on-accent);
     }
 
     .original-title {
         margin: 5px 0 0;
         overflow-wrap: anywhere;
         font-size: 12px;
-        color: var(--text-muted);
+        color: rgb(255 255 255 / 66%);
     }
 
     .review-meta {
@@ -703,16 +765,16 @@ import Layout from "../layouts/Layout.astro";
 
     .review-meta span {
         padding: 3px 8px;
-        border: 1px solid var(--border-soft);
+        border: 1px solid rgb(255 255 255 / 20%);
         border-radius: 999px;
         font-size: 11px;
-        color: var(--text-secondary);
-        background: var(--surface-muted);
+        color: rgb(255 255 255 / 78%);
+        background: rgb(255 255 255 / 8%);
     }
 
     .review-meta .region-badge {
-        border-color: color-mix(in srgb, var(--accent-blue) 45%, transparent);
-        color: var(--accent-blue);
+        border-color: rgb(255 255 255 / 42%);
+        color: var(--on-accent);
     }
 
     .review-meta [hidden] {
@@ -722,11 +784,57 @@ import Layout from "../layouts/Layout.astro";
     .empty-result {
         margin: 0;
         padding: 28px;
-        border: 1px dashed var(--border);
+        border: 1px dashed rgb(255 255 255 / 38%);
         border-radius: 8px;
         text-align: center;
-        color: var(--text-muted);
-        background: var(--surface);
+        color: rgb(255 255 255 / 76%);
+        background: rgb(255 255 255 / 6%);
+    }
+
+    .review-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    .review-pagination[hidden] {
+        display: none;
+    }
+
+    .review-pagination button {
+        min-height: 32px;
+        padding: 4px 10px;
+        border: 1px solid rgb(255 255 255 / 28%);
+        border-radius: 6px;
+        color: var(--on-accent);
+        background: rgb(255 255 255 / 8%);
+        cursor: pointer;
+    }
+
+    .review-pagination button:hover:not(:disabled) {
+        border-color: rgb(255 255 255 / 55%);
+        background: rgb(255 255 255 / 15%);
+    }
+
+    .review-pagination button:disabled {
+        opacity: 0.38;
+        cursor: default;
+    }
+
+    .page-numbers {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    :global(.page-number[aria-current="page"]) {
+        border-color: var(--on-accent);
+        color: var(--accent-fill);
+        background: var(--on-accent);
+        font-weight: 650;
     }
 
     .sync-time {
