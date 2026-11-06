@@ -34,7 +34,19 @@ const reviews = defineCollection({
     }),
 });
 
+const galleries = defineCollection({
+    loader: glob({ base: "./src/content/galleries", pattern: "**/*.{md,mdx}" }),
+    schema: z.object({
+        image: z.string().trim().startsWith("/images/gallery/"),
+        date: z.coerce.date(),
+        summary: z.string().trim().min(1),
+        alt: z.string().trim().optional(),
+        draft: z.boolean().default(false),
+    }),
+});
+
 export const collections = {
     articles,
     reviews,
+    galleries,
 };

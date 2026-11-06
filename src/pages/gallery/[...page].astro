@@ -1,9 +1,13 @@
 ---
+import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
-import { getGalleryImages } from "../../lib/gallery";
 
 export async function getStaticPaths({ paginate }) {
-    const images = await getGalleryImages();
+    const images = (await getCollection("galleries", ({ data }) => {
+        return data.draft !== true;
+    })).sort((a, b) => {
+        return b.data.date.valueOf() - a.data.date.valueOf();
+    });
 
     return paginate(images, {
         pageSize: 12,
@@ -32,10 +36,11 @@ const { page } = Astro.props;
             {page.data.map((image, index) => (
                 <figure class="gallery-item">
                     <img
-                        src={image.src}
-                        alt=""
+                        src={image.data.image}
+                        alt={image.data.alt ?? ""}
                         loading={page.currentPage === 1 && index < 3 ? "eager" : "lazy"}
                     />
+                    <figcaption>{image.data.summary}</figcaption>
                 </figure>
             ))}
         </section>
@@ -121,6 +126,14 @@ const { page } = Astro.props;
 
     .gallery-item:hover img {
         opacity: 0.88;
+    }
+
+    .gallery-item figcaption {
+        padding: 11px 13px 12px;
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--text-secondary);
+        background: var(--surface);
     }
 
     .empty-gallery {

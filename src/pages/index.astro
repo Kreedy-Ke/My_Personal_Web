@@ -3,7 +3,6 @@ import { getCollection } from "astro:content";
 import { SITE_NAME } from "../config";
 import Layout from "../layouts/Layout.astro";
 import { getArticleMeta } from "../lib/articles";
-import { getGalleryImages } from "../lib/gallery";
 
 type RecentUpdate = {
     title: string;
@@ -33,7 +32,7 @@ const sections = [
 
 const [articles, galleryImages, reviews] = await Promise.all([
     getCollection("articles", ({ data }) => data.draft !== true),
-    getGalleryImages(),
+    getCollection("galleries", ({ data }) => data.draft !== true),
     getCollection("reviews", ({ data }) => data.draft !== true),
 ]);
 
