@@ -17,6 +17,7 @@ Windows 上也可以双击 `start-site.cmd` 启动，并直接打开 Articles �
 - Gallery 图片位于 `public/images/gallery/`，每张图片对应 `src/content/galleries/` 中的一个 Markdown 文件。
 - Gallery 的内容字段包括 `image`、`date`、`summary`、`alt` 和 `draft`。
 - 作品评价通过 Cloudflare Function 从 Bangumi 用户 `kreedy_ke` 自动同步，按动画、漫画和轻小说分类，结果缓存 6 小时。
+- 作品细化评分与短评通过 `/reviews/edit/` 编辑，需要 Cloudflare Pages 的 `REVIEW_NOTES` KV 绑定和 `REVIEW_NOTES_TOKEN` 密钥。
 - 日常管理 Gallery 可使用 `.pages.yml` 配置的 Pages CMS。
 
 ## 构建与部署

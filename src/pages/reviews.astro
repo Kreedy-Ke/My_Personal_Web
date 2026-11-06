@@ -144,6 +144,10 @@ import Layout from "../layouts/Layout.astro";
                         <span class="score-note">（我的评分/Bangumi 均分）</span>
                     </p>
                 </div>
+                <div class="custom-tags" hidden>
+                    <span class="detail-score" hidden></span>
+                    <span class="detail-comment" hidden></span>
+                </div>
             </div>
         </a>
     </template>
@@ -157,6 +161,7 @@ import Layout from "../layouts/Layout.astro";
         completion: "completed" | "ongoing" | "unknown";
         cover: string;
         date: string;
+        id: number;
         originalTitle: string;
         rating: number;
         region: "japan" | "non-japan";
@@ -177,6 +182,11 @@ import Layout from "../layouts/Layout.astro";
         categories: Category[];
         profileUrl: string;
         syncedAt: string;
+    };
+
+    type ReviewNote = {
+        comment: string;
+        score: number | null;
     };
 
     (() => {
@@ -228,6 +238,7 @@ import Layout from "../layouts/Layout.astro";
         let completion = "all";
         let status = "watched";
         let currentPage = 1;
+        let reviewNotes: Record<string, ReviewNote> = {};
 
         const updateFilterSummary = () => {
             const regionLabels: Record<string, string> = {
@@ -264,7 +275,7 @@ import Layout from "../layouts/Layout.astro";
             });
         };
 
-        const createCard = (item: ReviewItem) => {
+        const createCard = (item: ReviewItem, note?: ReviewNote) => {
             const card = cardTemplate.content.firstElementChild?.cloneNode(true) as HTMLAnchorElement;
             const image = card.querySelector<HTMLImageElement>("img");
             const placeholder = card.querySelector<HTMLElement>(".cover-placeholder");
@@ -273,6 +284,9 @@ import Layout from "../layouts/Layout.astro";
             const releaseYear = card.querySelector<HTMLElement>(".release-year");
             const myScore = card.querySelector<HTMLElement>(".my-score");
             const bangumiScore = card.querySelector<HTMLElement>(".bangumi-score");
+            const customTags = card.querySelector<HTMLElement>(".custom-tags");
+            const detailScore = card.querySelector<HTMLElement>(".detail-score");
+            const detailComment = card.querySelector<HTMLElement>(".detail-comment");
 
             card.href = item.url;
             title.textContent = item.title;
@@ -290,6 +304,18 @@ import Layout from "../layouts/Layout.astro";
             if (item.date) {
                 releaseYear.textContent = item.date.slice(0, 4);
                 releaseYear.hidden = false;
+            }
+
+            if (note?.score !== null && note?.score !== undefined) {
+                detailScore.textContent = `细化 ${note.score.toFixed(1)}`;
+                detailScore.hidden = false;
+                customTags.hidden = false;
+            }
+
+            if (note?.comment) {
+                detailComment.textContent = note.comment;
+                detailComment.hidden = false;
+                customTags.hidden = false;
             }
 
             if (item.cover) {
@@ -332,7 +358,7 @@ import Layout from "../layouts/Layout.astro";
             pagination.hidden = items.length === 0 || totalPages === 1;
 
             for (const item of pageItems) {
-                grid.append(createCard(item));
+                grid.append(createCard(item, reviewNotes[String(item.id)]));
             }
 
             pageNumbers.replaceChildren();
@@ -417,18 +443,29 @@ import Layout from "../layouts/Layout.astro";
             renderResults();
         });
 
-        fetch("/api/bangumi", {
-            headers: { Accept: "application/json" },
-        })
-            .then(async (response) => {
+        Promise.all([
+            fetch("/api/bangumi", {
+                headers: { Accept: "application/json" },
+            }).then(async (response) => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
 
                 return response.json() as Promise<ReviewPayload>;
+            }),
+            fetch("/api/review-notes", {
+                headers: { Accept: "application/json" },
             })
-            .then((payload) => {
+                .then(async (response) => {
+                    return response.ok
+                        ? response.json() as Promise<Record<string, ReviewNote>>
+                        : {};
+                })
+                .catch(() => ({})),
+        ])
+            .then(([payload, notes]) => {
                 categories = payload.categories;
+                reviewNotes = notes;
 
                 if (profileLink) {
                     profileLink.href = payload.profileUrl;
@@ -839,6 +876,41 @@ import Layout from "../layouts/Layout.astro";
         font-size: 11px;
         font-weight: 400;
         color: rgb(23 51 38 / 62%);
+    }
+
+    .custom-tags {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: 9px;
+    }
+
+    .custom-tags[hidden],
+    .custom-tags span[hidden] {
+        display: none;
+    }
+
+    .detail-score,
+    .detail-comment {
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: var(--review-ink);
+        background: rgb(255 255 255 / 42%);
+    }
+
+    .detail-score {
+        flex: 0 0 auto;
+        font-weight: 700;
+        color: white;
+        background: var(--review-strong);
+    }
+
+    .detail-comment {
+        max-width: 100%;
+        overflow-wrap: anywhere;
     }
 
     .empty-result {
