@@ -487,10 +487,20 @@ import Layout from "../layouts/Layout.astro";
         margin-bottom: -1px;
         border-color: var(--border);
         border-bottom-color: var(--surface);
-        color: var(--accent-blue);
+        color: var(--text);
         background: var(--surface);
         font-weight: 650;
         box-shadow: 0 -4px 10px var(--header-shadow);
+    }
+
+    .folder-main-tab[aria-pressed="true"]::after {
+        position: absolute;
+        right: -1px;
+        bottom: -2px;
+        left: -1px;
+        height: 4px;
+        background: var(--surface);
+        content: "";
     }
 
     .folder-tab {
