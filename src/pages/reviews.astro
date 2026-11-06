@@ -1,103 +1,199 @@
 ---
-import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
-
-const reviews = (await getCollection("reviews", ({ data }) => {
-    return data.draft !== true;
-})).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-
-const years = [...new Set(reviews.map((review) => review.data.date.getFullYear()))];
-
-const categoryLabels = {
-    book: "书籍",
-    movie: "电影",
-    anime: "动画",
-    game: "游戏",
-    music: "音乐",
-    art: "艺术",
-    other: "其他",
-};
-
-const statusLabels = {
-    planned: "想看",
-    watching: "在看",
-    reading: "在读",
-    playing: "在玩",
-    finished: "已完成",
-    paused: "暂停",
-    dropped: "放弃",
-};
 ---
 
 <Layout
     title="Reviews"
-    description="作品评价列表。"
-    width="920px"
+    description="动画、漫画和轻小说的 Bangumi 评分记录。"
+    width="980px"
 >
     <header class="list-header">
         <p class="eyebrow">Reviews</p>
         <div class="title-row">
             <h1>作品评价</h1>
             <span class="title-divider" aria-hidden="true"></span>
-            <p class="intro">书、电影、动画、游戏、音乐和其他作品的记录与评价。</p>
+            <p class="intro">动画、漫画与轻小说的个人评分记录。</p>
         </div>
     </header>
 
-    {reviews.length > 0 ? (
-        <div class="year-list">
-            {years.map((year) => (
-                <section class="year-group">
-                    <h2 class="year-title">{year}</h2>
-                    <div class="review-list">
-                        {reviews
-                            .filter((review) => review.data.date.getFullYear() === year)
-                            .map((review) => (
-                                <a class="review-card" href={`/reviews/${review.id}/`}>
-                                    {review.data.cover ? (
-                                        <img
-                                            src={review.data.cover}
-                                            alt=""
-                                            loading="lazy"
-                                        />
-                                    ) : (
-                                        <div class="cover-placeholder">
-                                            {categoryLabels[review.data.category]}
-                                        </div>
-                                    )}
+    <p class="source-note">
+        数据来自
+        <a href="https://bgm.tv/user/kreedy_ke" data-profile-link>Bangumi</a>，
+        每 6 小时自动更新。仅显示已评分的作品。
+    </p>
 
-                                    <div class="review-body">
-                                        <div class="review-title">
-                                            <h3>{review.data.workTitle}</h3>
-                                            {review.data.originalTitle && (
-                                                <p>{review.data.originalTitle}</p>
-                                            )}
-                                        </div>
+    <p class="review-state" data-review-state role="status">
+        正在从 Bangumi 获取收藏……
+    </p>
+    <div class="review-groups" data-review-groups hidden></div>
 
-                                        <div class="review-meta">
-                                            <span>{categoryLabels[review.data.category]}</span>
-                                            <span>{statusLabels[review.data.status]}</span>
-                                            {review.data.year && <span>{review.data.year}</span>}
-                                            {review.data.rating !== undefined && (
-                                                <span>{review.data.rating}/10</span>
-                                            )}
-                                        </div>
+    <template data-group-template>
+        <section class="review-group">
+            <header class="group-header">
+                <h2></h2>
+                <span class="group-count"></span>
+            </header>
+            <div class="review-grid"></div>
+        </section>
+    </template>
 
-                                        <p class="summary">{review.data.summary}</p>
-                                    </div>
-                                </a>
-                            ))}
-                    </div>
-                </section>
-            ))}
-        </div>
-    ) : (
-        <p class="empty-reviews">还没有作品评价。</p>
-    )}
+    <template data-card-template>
+        <a class="review-card" target="_blank" rel="noreferrer">
+            <div class="cover-wrap">
+                <img alt="" loading="lazy" />
+                <span class="cover-placeholder">暂无封面</span>
+            </div>
+            <div class="review-body">
+                <div class="review-heading">
+                    <h3></h3>
+                    <span class="rating"></span>
+                </div>
+                <p class="original-title"></p>
+                <p class="review-meta"></p>
+            </div>
+        </a>
+    </template>
+
+    <p class="sync-time" data-sync-time hidden></p>
 </Layout>
+
+<script>
+    (() => {
+        const state = document.querySelector<HTMLElement>("[data-review-state]");
+        const groups = document.querySelector<HTMLElement>("[data-review-groups]");
+        const groupTemplate = document.querySelector<HTMLTemplateElement>(
+            "[data-group-template]",
+        );
+        const cardTemplate = document.querySelector<HTMLTemplateElement>(
+            "[data-card-template]",
+        );
+        const profileLink = document.querySelector<HTMLAnchorElement>(
+            "[data-profile-link]",
+        );
+        const syncTime = document.querySelector<HTMLElement>("[data-sync-time]");
+
+        if (!state || !groups || !groupTemplate || !cardTemplate || !syncTime) {
+            return;
+        }
+
+        const showMessage = (message: string, isError = false) => {
+            state.textContent = message;
+            state.hidden = false;
+            state.classList.toggle("is-error", isError);
+            groups.hidden = true;
+        };
+
+        const createCard = (item: {
+            cover: string;
+            originalTitle: string;
+            rating: number;
+            status: string;
+            subjectScore: number | null;
+            title: string;
+            url: string;
+        }) => {
+            const card = cardTemplate.content.firstElementChild?.cloneNode(true) as HTMLAnchorElement;
+            const image = card.querySelector<HTMLImageElement>("img");
+            const placeholder = card.querySelector<HTMLElement>(".cover-placeholder");
+            const title = card.querySelector<HTMLElement>("h3");
+            const originalTitle = card.querySelector<HTMLElement>(".original-title");
+            const rating = card.querySelector<HTMLElement>(".rating");
+            const meta = card.querySelector<HTMLElement>(".review-meta");
+
+            card.href = item.url;
+            title.textContent = item.title;
+            rating.textContent = `${item.rating} / 10`;
+
+            if (item.originalTitle) {
+                originalTitle.textContent = item.originalTitle;
+            } else {
+                originalTitle.remove();
+            }
+
+            const scoreText = item.subjectScore === null
+                ? item.status
+                : `${item.status} · Bangumi ${item.subjectScore.toFixed(1)}`;
+            meta.textContent = scoreText;
+
+            if (item.cover) {
+                image.src = item.cover;
+                image.alt = `${item.title}封面`;
+                placeholder.hidden = true;
+            } else {
+                image.remove();
+            }
+
+            return card;
+        };
+
+        const render = (payload: {
+            profileUrl: string;
+            syncedAt: string;
+            categories: {
+                items: Parameters<typeof createCard>[0][];
+                key: string;
+                label: string;
+            }[];
+        }) => {
+            groups.replaceChildren();
+
+            for (const category of payload.categories) {
+                if (category.items.length === 0) {
+                    continue;
+                }
+
+                const section = groupTemplate.content.firstElementChild?.cloneNode(true) as HTMLElement;
+                const heading = section.querySelector<HTMLElement>("h2");
+                const count = section.querySelector<HTMLElement>(".group-count");
+                const grid = section.querySelector<HTMLElement>(".review-grid");
+
+                heading.textContent = category.label;
+                count.textContent = `${category.items.length} 部`;
+
+                for (const item of category.items) {
+                    grid.append(createCard(item));
+                }
+
+                groups.append(section);
+            }
+
+            if (profileLink) {
+                profileLink.href = payload.profileUrl;
+            }
+
+            const hasItems = groups.childElementCount > 0;
+            state.hidden = hasItems;
+            groups.hidden = !hasItems;
+
+            if (!hasItems) {
+                showMessage("Bangumi 中暂无已评分的动画、漫画或轻小说。");
+                return;
+            }
+
+            syncTime.textContent = `最近同步：${new Date(payload.syncedAt).toLocaleString("zh-CN")}`;
+            syncTime.hidden = false;
+        };
+
+        fetch("/api/bangumi", {
+            headers: { Accept: "application/json" },
+        })
+            .then(async (response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                return response.json();
+            })
+            .then(render)
+            .catch(() => {
+                showMessage("暂时无法从 Bangumi 获取收藏，请稍后再试。", true);
+            });
+    })();
+</script>
 
 <style>
     .list-header {
-        margin-bottom: 40px;
+        margin-bottom: 24px;
     }
 
     .list-header .eyebrow {
@@ -130,22 +226,18 @@ const statusLabels = {
         color: var(--text-secondary);
     }
 
-    .year-list {
-        display: grid;
-        gap: 40px;
+    .source-note,
+    .sync-time {
+        margin: 0 0 24px;
+        font-size: 13px;
+        color: var(--text-muted);
     }
 
-    .year-title {
-        margin: 0 0 16px;
-        font-size: 28px;
+    .source-note a {
+        color: var(--accent-blue);
     }
 
-    .review-list {
-        display: grid;
-        gap: 16px;
-    }
-
-    .empty-reviews {
+    .review-state {
         margin: 0;
         padding: 28px;
         border: 1px dashed var(--border);
@@ -155,69 +247,141 @@ const statusLabels = {
         background: var(--surface);
     }
 
+    .review-state.is-error {
+        color: var(--text-secondary);
+    }
+
+    .review-groups {
+        display: grid;
+        gap: 36px;
+    }
+
+    .group-header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .group-header h2 {
+        margin: 0;
+        font-size: 26px;
+    }
+
+    .group-count {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .review-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
     .review-card {
         display: grid;
-        grid-template-columns: 112px 1fr;
-        gap: 20px;
-        padding: 18px;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 14px;
+        min-width: 0;
+        padding: 12px;
         border: 1px solid var(--border);
         border-radius: 8px;
         color: inherit;
         text-decoration: none;
         background: var(--surface);
+        transition:
+            border-color 160ms ease,
+            background 160ms ease;
     }
 
     .review-card:hover {
         border-color: var(--accent-blue);
-        background: var(--surface);
+        background: var(--surface-hover);
     }
 
-    .review-card img,
-    .cover-placeholder {
-        width: 112px;
-        height: 156px;
-        border-radius: 6px;
-        object-fit: cover;
+    .cover-wrap {
+        position: relative;
+        aspect-ratio: 3 / 4;
+        overflow: hidden;
+        border-radius: 5px;
         background: var(--cover-bg);
     }
 
+    .cover-wrap img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
     .cover-placeholder {
+        position: absolute;
+        inset: 0;
         display: grid;
         place-items: center;
-        padding: 12px;
+        padding: 8px;
         text-align: center;
+        font-size: 11px;
         color: var(--text-muted);
     }
 
-    .review-title h3 {
-        margin: 0 0 6px;
-        font-size: 24px;
+    .cover-placeholder[hidden] {
+        display: none;
     }
 
-    .review-title p {
+    .review-body {
+        min-width: 0;
+    }
+
+    .review-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .review-heading h3 {
         margin: 0;
+        overflow-wrap: anywhere;
+        font-size: 18px;
+        line-height: 1.4;
+    }
+
+    .rating {
+        flex: 0 0 auto;
+        padding: 3px 7px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: var(--on-accent);
+        background: var(--accent-fill);
+    }
+
+    .original-title {
+        margin: 6px 0 0;
+        overflow-wrap: anywhere;
+        font-size: 12px;
         color: var(--text-muted);
     }
 
     .review-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 16px 0;
-    }
-
-    .review-meta span {
-        padding: 4px 8px;
-        border: 1px solid var(--border);
-        border-radius: 999px;
-        font-size: 14px;
+        margin: 10px 0 0;
+        font-size: 12px;
         color: var(--text-secondary);
     }
 
-    .summary {
-        margin: 0;
-        line-height: 1.7;
-        color: var(--text-secondary);
+    .sync-time {
+        margin-top: 28px;
+        margin-bottom: 0;
+        text-align: right;
+    }
+
+    @media (max-width: 760px) {
+        .review-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     @media (max-width: 640px) {
@@ -229,17 +393,6 @@ const statusLabels = {
 
         .title-divider {
             display: none;
-        }
-
-        .review-card {
-            grid-template-columns: 80px 1fr;
-            gap: 14px;
-        }
-
-        .review-card img,
-        .cover-placeholder {
-            width: 80px;
-            height: 112px;
         }
     }
 </style>

@@ -30,10 +30,9 @@ const sections = [
     },
 ];
 
-const [articles, galleryImages, reviews] = await Promise.all([
+const [articles, galleryImages] = await Promise.all([
     getCollection("articles", ({ data }) => data.draft !== true),
     getCollection("galleries", ({ data }) => data.draft !== true),
-    getCollection("reviews", ({ data }) => data.draft !== true),
 ]);
 
 const galleryImageCount = galleryImages.length;
@@ -51,7 +50,7 @@ const stats = [
     },
     {
         label: "Reviews",
-        value: reviews.length,
+        value: "00",
         href: "/reviews/",
     },
 ];
@@ -68,13 +67,6 @@ const recentUpdates: RecentUpdate[] = [
             summary: meta.summary,
         };
     }),
-    ...reviews.map((review) => ({
-        title: review.data.workTitle,
-        href: `/reviews/${review.id}/`,
-        type: "评价",
-        date: review.data.date,
-        summary: review.data.summary,
-    })),
 ]
     .sort((a, b) => b.date.valueOf() - a.date.valueOf())
     .slice(0, 10);
@@ -104,7 +96,9 @@ const recentUpdates: RecentUpdate[] = [
                 {stats.map((stat) => (
                     <a class="stat" href={stat.href}>
                         <span>{stat.label}</span>
-                        <strong>{String(stat.value).padStart(2, "0")}</strong>
+                        <strong data-stat={stat.label.toLocaleLowerCase()}>
+                            {String(stat.value).padStart(2, "0")}
+                        </strong>
                     </a>
                 ))}
             </nav>
@@ -124,7 +118,10 @@ const recentUpdates: RecentUpdate[] = [
                 <div class="console-lines">
                     <p><span>STATUS</span> ONLINE</p>
                     <p><span>SECTIONS</span> 03</p>
-                    <p><span>ENTRIES</span> {String(articles.length + galleryImageCount + reviews.length).padStart(2, "0")}</p>
+                    <p>
+                        <span>ENTRIES</span>
+                        <b data-entry-count>{String(articles.length + galleryImageCount).padStart(2, "0")}</b>
+                    </p>
                     <p>
                         <span>LAST_SIGNAL</span>
                         {recentUpdates[0]
@@ -237,6 +234,39 @@ const recentUpdates: RecentUpdate[] = [
         <p>晚上好，以及，What a nice day。</p>
     </footer>
 </Layout>
+
+<script>
+    (() => {
+        const reviewStat = document.querySelector<HTMLElement>('[data-stat="reviews"]');
+        const entryCount = document.querySelector<HTMLElement>("[data-entry-count]");
+
+        if (!reviewStat || !entryCount) {
+            return;
+        }
+
+        const baseEntries = Number(entryCount.textContent ?? 0);
+
+        fetch("/api/bangumi", {
+            headers: { Accept: "application/json" },
+        })
+            .then(async (response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                return response.json();
+            })
+            .then((payload) => {
+                const reviewCount = Number(payload.total ?? 0);
+
+                reviewStat.textContent = String(reviewCount).padStart(2, "0");
+                entryCount.textContent = String(baseEntries + reviewCount).padStart(2, "0");
+            })
+            .catch(() => {
+                // Keep the static baseline if the external API is temporarily unavailable.
+            });
+    })();
+</script>
 
 <style>
     .home-grid {
