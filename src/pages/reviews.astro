@@ -881,7 +881,7 @@ import Layout from "../layouts/Layout.astro";
     .custom-tags {
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
+        align-items: flex-start;
         gap: 6px;
         margin-top: 9px;
     }
@@ -893,24 +893,32 @@ import Layout from "../layouts/Layout.astro";
 
     .detail-score,
     .detail-comment {
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        line-height: 1.6;
         color: var(--review-ink);
-        background: rgb(255 255 255 / 42%);
     }
 
     .detail-score {
+        order: 2;
         flex: 0 0 auto;
+        margin-left: auto;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 12px;
         font-weight: 700;
+        line-height: 1.6;
         color: white;
         background: var(--review-strong);
     }
 
     .detail-comment {
+        order: 1;
+        padding: 4px 9px;
+        border: 1px solid rgb(23 51 38 / 28%);
+        border-radius: 4px;
+        font-size: 13px;
+        line-height: 1.55;
         max-width: 100%;
         overflow-wrap: anywhere;
+        background: rgb(255 255 255 / 42%);
     }
 
     .empty-result {
