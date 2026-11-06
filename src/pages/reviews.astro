@@ -16,13 +16,6 @@ import Layout from "../layouts/Layout.astro";
         </div>
     </header>
 
-    <p class="source-note">
-        数据来自
-        <a href="https://bgm.tv/user/kreedy_ke" data-profile-link>Bangumi</a>，
-        每 6 小时自动更新。仅显示已评分的作品；完结状态优先读取 Bangumi
-        标签，缺失时按收藏进度推断。
-    </p>
-
     <p class="review-state" data-review-state role="status">
         正在从 Bangumi 获取收藏……
     </p>
@@ -206,7 +199,6 @@ import Layout from "../layouts/Layout.astro";
         const pagePrev = document.querySelector<HTMLButtonElement>("[data-page-prev]");
         const pageNext = document.querySelector<HTMLButtonElement>("[data-page-next]");
         const cardTemplate = document.querySelector<HTMLTemplateElement>("[data-card-template]");
-        const profileLink = document.querySelector<HTMLAnchorElement>("[data-profile-link]");
         const syncTime = document.querySelector<HTMLElement>("[data-sync-time]");
 
         if (
@@ -467,10 +459,6 @@ import Layout from "../layouts/Layout.astro";
                 categories = payload.categories;
                 reviewNotes = notes;
 
-                if (profileLink) {
-                    profileLink.href = payload.profileUrl;
-                }
-
                 if (payload.categories.every((category) => category.items.length === 0)) {
                     state.textContent = "Bangumi 中暂无已评分的动画、漫画或轻小说。";
                     return;
@@ -525,15 +513,10 @@ import Layout from "../layouts/Layout.astro";
         color: var(--text-secondary);
     }
 
-    .source-note,
     .sync-time {
         margin: 0 0 24px;
         font-size: 13px;
         color: var(--text-muted);
-    }
-
-    .source-note a {
-        color: var(--accent-blue);
     }
 
     .review-state {
@@ -807,7 +790,7 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .review-card.has-note-score .review-body {
-        padding-right: 58px;
+        padding-right: 84px;
     }
 
     .review-heading {
@@ -905,11 +888,11 @@ import Layout from "../layouts/Layout.astro";
         position: absolute;
         top: 0;
         right: 0;
-        padding: 3px 10px;
+        padding: 4px 15px;
         border-radius: 999px;
-        font-size: 12px;
+        font-size: 18px;
         font-weight: 700;
-        line-height: 1.6;
+        line-height: 1.4;
         color: white;
         background: var(--review-strong);
     }
