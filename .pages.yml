@@ -1,0 +1,44 @@
+media:
+  - name: gallery
+    label: 图片集图片
+    input: public/images/gallery
+    output: /images/gallery
+    categories: [image]
+    rename: safe
+
+content:
+  - name: gallery
+    label: 图片集
+    type: collection
+    path: src/content/galleries
+    format: yaml-frontmatter
+    filename:
+      template: "{year}-{month}-{day}-{primary}.md"
+      field: create
+    view:
+      primary: summary
+      sort: date
+      order: desc
+    fields:
+      - name: image
+        label: 图片
+        type: image
+        options:
+          media: gallery
+          path: public/images/gallery
+        required: true
+      - name: date
+        label: 上传日期
+        type: date
+        required: true
+      - name: summary
+        label: 一句话简介
+        type: string
+        required: true
+      - name: alt
+        label: 图片替代文字
+        type: string
+      - name: draft
+        label: 草稿
+        type: boolean
+        default: false
