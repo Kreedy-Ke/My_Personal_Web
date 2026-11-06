@@ -1,6 +1,7 @@
 const DEFAULT_USERNAME = "kreedy_ke";
 const BANGUMI_API = "https://api.bgm.tv";
 const CACHE_SECONDS = 6 * 60 * 60;
+const CACHE_VERSION = "2";
 const PAGE_SIZE = 50;
 const MAX_PAGES = 20;
 
@@ -10,17 +11,37 @@ const categoryDefinitions = [
     { key: "light-novel", label: "轻小说" },
 ];
 
-const statusLabels = {
-    1: "想看",
-    2: "看过",
-    3: "在看",
-    4: "搁置",
-    5: "抛弃",
+const statusDetails = {
+    1: { key: "wish", label: "想看" },
+    2: { key: "watched", label: "看过" },
+    3: { key: "watching", label: "在看" },
+    4: { key: "onhold", label: "搁置" },
+    5: { key: "dropped", label: "抛弃" },
 };
 
 const includesTag = (tags, values) => {
     return tags.some((tag) => values.includes(tag.trim().toLocaleLowerCase("zh-CN")));
 };
+
+const completedTags = ["完结", "已完结", "连载结束", "放送结束", "全话完结"];
+const ongoingTags = ["未完结", "连载中", "放送中", "连载进行中"];
+const nonJapaneseTags = [
+    "中国",
+    "国产",
+    "国漫",
+    "美国",
+    "欧美",
+    "韩国",
+    "法国",
+    "英国",
+    "德国",
+    "俄罗斯",
+    "加拿大",
+    "澳大利亚",
+    "印度",
+    "泰国",
+    "新加坡",
+];
 
 const jsonResponse = (body, status = 200) => {
     return new Response(JSON.stringify(body), {
@@ -105,17 +126,32 @@ const normalizeCollection = (collection) => {
     }
 
     const images = subject.images ?? {};
+    const status = statusDetails[Number(collection.type)] ?? {
+        key: "watched",
+        label: "已收藏",
+    };
+    let completion = "unknown";
+
+    if (includesTag(tags, ongoingTags)) {
+        completion = "ongoing";
+    } else if (includesTag(tags, completedTags)) {
+        completion = "completed";
+    }
 
     return {
         id: Number(subject.id ?? collection.subject_id),
         category,
+        completion,
+        date: subject.date ?? "",
         title: subject.name_cn?.trim() || subject.name || "未命名作品",
         originalTitle: subject.name_cn?.trim() && subject.name !== subject.name_cn
             ? subject.name
             : "",
         cover: images.large || images.common || images.medium || images.small || "",
         rating: Number(collection.rate),
-        status: statusLabels[Number(collection.type)] ?? "已收藏",
+        status: status.label,
+        statusKey: status.key,
+        region: includesTag(tags, nonJapaneseTags) ? "non-japan" : "japan",
         subjectScore: subject.score === undefined ? null : Number(subject.score),
         url: `https://bgm.tv/subject/${subject.id ?? collection.subject_id}`,
     };
@@ -126,6 +162,7 @@ export async function onRequestGet(context) {
     const requestUrl = new URL(context.request.url);
     const cacheUrl = new URL("/api/bangumi", requestUrl.origin);
     cacheUrl.searchParams.set("user", username);
+    cacheUrl.searchParams.set("version", CACHE_VERSION);
     const cacheKey = new Request(cacheUrl.toString(), {
         headers: { Accept: "application/json" },
     });
@@ -152,6 +189,7 @@ export async function onRequestGet(context) {
                 .filter((item) => item.category === category.key)
                 .sort((a, b) => {
                     return (
+                        b.date.localeCompare(a.date) ||
                         b.rating - a.rating ||
                         (b.subjectScore ?? 0) - (a.subjectScore ?? 0) ||
                         a.title.localeCompare(b.title, "zh-CN")

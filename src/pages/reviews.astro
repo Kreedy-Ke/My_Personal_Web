@@ -25,23 +25,81 @@ import Layout from "../layouts/Layout.astro";
     <p class="review-state" data-review-state role="status">
         正在从 Bangumi 获取收藏……
     </p>
-    <nav
-        class="category-tabs"
-        data-category-tabs
-        aria-label="作品分类"
-        hidden
-    ></nav>
-    <div class="review-groups" data-review-groups hidden></div>
 
-    <template data-group-template>
-        <section class="review-group">
+    <section class="review-browser" data-review-browser hidden>
+        <nav
+            class="folder-nav category-tabs"
+            data-category-tabs
+            aria-label="作品类型"
+        ></nav>
+
+        <div class="folder-filters">
+            <div class="folder-row">
+                <span class="folder-label">地区</span>
+                <div class="folder-options" data-region-tabs role="group" aria-label="地区筛选">
+                    <button class="folder-tab" type="button" data-region="all" aria-pressed="false">
+                        全部地区
+                    </button>
+                    <button class="folder-tab" type="button" data-region="japan" aria-pressed="true">
+                        日本
+                    </button>
+                    <button class="folder-tab" type="button" data-region="non-japan" aria-pressed="false">
+                        非日本
+                    </button>
+                </div>
+            </div>
+
+            <div class="folder-row">
+                <span class="folder-label">状态</span>
+                <div class="folder-options" data-completion-tabs role="group" aria-label="连载状态筛选">
+                    <button class="folder-tab" type="button" data-completion="all" aria-pressed="true">
+                        全部
+                    </button>
+                    <button class="folder-tab" type="button" data-completion="completed" aria-pressed="false">
+                        完结
+                    </button>
+                    <button class="folder-tab" type="button" data-completion="ongoing" aria-pressed="false">
+                        未完结
+                    </button>
+                </div>
+            </div>
+
+            <div class="folder-row">
+                <span class="folder-label">收藏</span>
+                <div class="folder-options" data-status-tabs role="group" aria-label="收藏状态筛选">
+                    <button class="folder-tab" type="button" data-status="all" aria-pressed="true">
+                        全部
+                    </button>
+                    <button class="folder-tab" type="button" data-status="watching" aria-pressed="false">
+                        在看
+                    </button>
+                    <button class="folder-tab" type="button" data-status="watched" aria-pressed="false">
+                        看过
+                    </button>
+                    <button class="folder-tab" type="button" data-status="wish" aria-pressed="false">
+                        想看
+                    </button>
+                    <button class="folder-tab" type="button" data-status="dropped" aria-pressed="false">
+                        抛弃
+                    </button>
+                    <button class="folder-tab" type="button" data-status="onhold" aria-pressed="false">
+                        搁置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <section class="review-results">
             <header class="group-header">
-                <h2></h2>
-                <span class="group-count"></span>
+                <h2 data-active-title></h2>
+                <span class="group-count" data-active-count></span>
             </header>
-            <div class="review-grid"></div>
+            <div class="review-grid" data-review-grid></div>
+            <p class="empty-result" data-empty-result hidden>
+                当前筛选条件下没有作品。
+            </p>
         </section>
-    </template>
+    </section>
 
     <template data-card-template>
         <a class="review-card" target="_blank" rel="noreferrer">
@@ -55,7 +113,13 @@ import Layout from "../layouts/Layout.astro";
                     <span class="rating"></span>
                 </div>
                 <p class="original-title"></p>
-                <p class="review-meta"></p>
+                <div class="review-meta">
+                    <span class="status-badge"></span>
+                    <span class="completion-badge" hidden></span>
+                    <span class="region-badge" hidden>非日本</span>
+                    <span class="release-date" hidden></span>
+                    <span class="bangumi-score" hidden></span>
+                </div>
             </div>
         </a>
     </template>
@@ -64,59 +128,94 @@ import Layout from "../layouts/Layout.astro";
 </Layout>
 
 <script>
+    type ReviewItem = {
+        category: string;
+        completion: "completed" | "ongoing" | "unknown";
+        cover: string;
+        date: string;
+        originalTitle: string;
+        rating: number;
+        region: "japan" | "non-japan";
+        status: string;
+        statusKey: string;
+        subjectScore: number | null;
+        title: string;
+        url: string;
+    };
+
+    type Category = {
+        items: ReviewItem[];
+        key: string;
+        label: string;
+    };
+
+    type ReviewPayload = {
+        categories: Category[];
+        profileUrl: string;
+        syncedAt: string;
+    };
+
     (() => {
         const state = document.querySelector<HTMLElement>("[data-review-state]");
-        const groups = document.querySelector<HTMLElement>("[data-review-groups]");
+        const browser = document.querySelector<HTMLElement>("[data-review-browser]");
         const categoryTabs = document.querySelector<HTMLElement>("[data-category-tabs]");
-        const groupTemplate = document.querySelector<HTMLTemplateElement>(
-            "[data-group-template]",
-        );
-        const cardTemplate = document.querySelector<HTMLTemplateElement>(
-            "[data-card-template]",
-        );
-        const profileLink = document.querySelector<HTMLAnchorElement>(
-            "[data-profile-link]",
-        );
+        const regionTabs = document.querySelector<HTMLElement>("[data-region-tabs]");
+        const completionTabs = document.querySelector<HTMLElement>("[data-completion-tabs]");
+        const statusTabs = document.querySelector<HTMLElement>("[data-status-tabs]");
+        const grid = document.querySelector<HTMLElement>("[data-review-grid]");
+        const activeTitle = document.querySelector<HTMLElement>("[data-active-title]");
+        const activeCount = document.querySelector<HTMLElement>("[data-active-count]");
+        const emptyResult = document.querySelector<HTMLElement>("[data-empty-result]");
+        const cardTemplate = document.querySelector<HTMLTemplateElement>("[data-card-template]");
+        const profileLink = document.querySelector<HTMLAnchorElement>("[data-profile-link]");
         const syncTime = document.querySelector<HTMLElement>("[data-sync-time]");
 
         if (
             !state ||
-            !groups ||
+            !browser ||
             !categoryTabs ||
-            !groupTemplate ||
+            !regionTabs ||
+            !completionTabs ||
+            !statusTabs ||
+            !grid ||
+            !activeTitle ||
+            !activeCount ||
+            !emptyResult ||
             !cardTemplate ||
             !syncTime
         ) {
             return;
         }
 
-        const showMessage = (message: string, isError = false) => {
-            state.textContent = message;
-            state.hidden = false;
-            state.classList.toggle("is-error", isError);
-            groups.hidden = true;
+        let categories: Category[] = [];
+        let activeCategory = "";
+        let region = "japan";
+        let completion = "all";
+        let status = "all";
+
+        const setButtonPressed = (container: HTMLElement, selected: HTMLButtonElement) => {
+            container.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
+                button.setAttribute("aria-pressed", String(button === selected));
+            });
         };
 
-        const createCard = (item: {
-            cover: string;
-            originalTitle: string;
-            rating: number;
-            status: string;
-            subjectScore: number | null;
-            title: string;
-            url: string;
-        }) => {
+        const createCard = (item: ReviewItem) => {
             const card = cardTemplate.content.firstElementChild?.cloneNode(true) as HTMLAnchorElement;
             const image = card.querySelector<HTMLImageElement>("img");
             const placeholder = card.querySelector<HTMLElement>(".cover-placeholder");
             const title = card.querySelector<HTMLElement>("h3");
             const originalTitle = card.querySelector<HTMLElement>(".original-title");
             const rating = card.querySelector<HTMLElement>(".rating");
-            const meta = card.querySelector<HTMLElement>(".review-meta");
+            const statusBadge = card.querySelector<HTMLElement>(".status-badge");
+            const completionBadge = card.querySelector<HTMLElement>(".completion-badge");
+            const regionBadge = card.querySelector<HTMLElement>(".region-badge");
+            const releaseDate = card.querySelector<HTMLElement>(".release-date");
+            const bangumiScore = card.querySelector<HTMLElement>(".bangumi-score");
 
             card.href = item.url;
             title.textContent = item.title;
             rating.textContent = `${item.rating} / 10`;
+            statusBadge.textContent = item.status;
 
             if (item.originalTitle) {
                 originalTitle.textContent = item.originalTitle;
@@ -124,10 +223,27 @@ import Layout from "../layouts/Layout.astro";
                 originalTitle.remove();
             }
 
-            const scoreText = item.subjectScore === null
-                ? item.status
-                : `${item.status} · Bangumi ${item.subjectScore.toFixed(1)}`;
-            meta.textContent = scoreText;
+            if (item.completion === "completed") {
+                completionBadge.textContent = "完结";
+                completionBadge.hidden = false;
+            } else if (item.completion === "ongoing") {
+                completionBadge.textContent = "未完结";
+                completionBadge.hidden = false;
+            }
+
+            if (item.region === "non-japan") {
+                regionBadge.hidden = false;
+            }
+
+            if (item.date) {
+                releaseDate.textContent = `发布 ${item.date}`;
+                releaseDate.hidden = false;
+            }
+
+            if (item.subjectScore !== null) {
+                bangumiScore.textContent = `Bangumi ${item.subjectScore.toFixed(1)}`;
+                bangumiScore.hidden = false;
+            }
 
             if (item.cover) {
                 image.src = item.cover;
@@ -140,76 +256,75 @@ import Layout from "../layouts/Layout.astro";
             return card;
         };
 
-        const render = (payload: {
-            profileUrl: string;
-            syncedAt: string;
-            categories: {
-                items: Parameters<typeof createCard>[0][];
-                key: string;
-                label: string;
-            }[];
-        }) => {
-            groups.replaceChildren();
-            categoryTabs.replaceChildren();
+        const renderResults = () => {
+            const category = categories.find((item) => item.key === activeCategory);
 
-            const sections: HTMLElement[] = [];
-            const buttons: HTMLButtonElement[] = [];
-
-            for (const category of payload.categories) {
-                if (category.items.length === 0) {
-                    continue;
-                }
-
-                const section = groupTemplate.content.firstElementChild?.cloneNode(true) as HTMLElement;
-                const heading = section.querySelector<HTMLElement>("h2");
-                const count = section.querySelector<HTMLElement>(".group-count");
-                const grid = section.querySelector<HTMLElement>(".review-grid");
-                const button = document.createElement("button");
-                const sectionIndex = sections.length;
-
-                heading.textContent = category.label;
-                count.textContent = `${category.items.length} 部`;
-                button.type = "button";
-                button.textContent = `${category.label} ${category.items.length}`;
-                button.setAttribute("aria-pressed", String(sectionIndex === 0));
-                section.hidden = sectionIndex > 0;
-
-                for (const item of category.items) {
-                    grid.append(createCard(item));
-                }
-
-                button.addEventListener("click", () => {
-                    sections.forEach((item, index) => {
-                        item.hidden = index !== sectionIndex;
-                    });
-                    buttons.forEach((item) => {
-                        item.setAttribute("aria-pressed", String(item === button));
-                    });
-                });
-
-                categoryTabs.append(button);
-                buttons.push(button);
-                sections.push(section);
-                groups.append(section);
-            }
-
-            if (profileLink) {
-                profileLink.href = payload.profileUrl;
-            }
-
-            const hasItems = groups.childElementCount > 0;
-            state.hidden = hasItems;
-            groups.hidden = !hasItems;
-            categoryTabs.hidden = !hasItems;
-
-            if (!hasItems) {
-                showMessage("Bangumi 中暂无已评分的动画、漫画或轻小说。");
+            if (!category) {
                 return;
             }
 
-            syncTime.textContent = `最近同步：${new Date(payload.syncedAt).toLocaleString("zh-CN")}`;
-            syncTime.hidden = false;
+            const items = category.items.filter((item) => {
+                const matchesRegion = region === "all" || item.region === region;
+                const matchesCompletion =
+                    completion === "all" || item.completion === completion;
+                const matchesStatus = status === "all" || item.statusKey === status;
+
+                return matchesRegion && matchesCompletion && matchesStatus;
+            });
+
+            grid.replaceChildren();
+            activeTitle.textContent = category.label;
+            activeCount.textContent = `${items.length} 部`;
+            emptyResult.hidden = items.length > 0;
+
+            for (const item of items) {
+                grid.append(createCard(item));
+            }
         };
+
+        const renderCategoryTabs = () => {
+            categoryTabs.replaceChildren();
+
+            for (const [index, category] of categories.entries()) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "folder-tab";
+                button.textContent = `${category.label} ${category.items.length}`;
+                button.setAttribute("aria-pressed", String(index === 0));
+                button.addEventListener("click", () => {
+                    activeCategory = category.key;
+                    setButtonPressed(categoryTabs, button);
+                    renderResults();
+                });
+                categoryTabs.append(button);
+            }
+
+            activeCategory = categories[0]?.key ?? "";
+        };
+
+        const bindFilterGroup = (
+            container: HTMLElement,
+            attribute: "region" | "completion" | "status",
+            apply: (value: string) => void,
+        ) => {
+            container.querySelectorAll<HTMLButtonElement>(`[data-${attribute}]`).forEach((button) => {
+                button.addEventListener("click", () => {
+                    apply(button.dataset[attribute] ?? "all");
+                    setButtonPressed(container, button);
+                    renderResults();
+                });
+            });
+        };
+
+        bindFilterGroup(regionTabs, "region", (value) => {
+            region = value;
+        });
+        bindFilterGroup(completionTabs, "completion", (value) => {
+            completion = value;
+        });
+        bindFilterGroup(statusTabs, "status", (value) => {
+            status = value;
+        });
 
         fetch("/api/bangumi", {
             headers: { Accept: "application/json" },
@@ -219,11 +334,30 @@ import Layout from "../layouts/Layout.astro";
                     throw new Error(`HTTP ${response.status}`);
                 }
 
-                return response.json();
+                return response.json() as Promise<ReviewPayload>;
             })
-            .then(render)
+            .then((payload) => {
+                categories = payload.categories;
+
+                if (profileLink) {
+                    profileLink.href = payload.profileUrl;
+                }
+
+                if (payload.categories.every((category) => category.items.length === 0)) {
+                    state.textContent = "Bangumi 中暂无已评分的动画、漫画或轻小说。";
+                    return;
+                }
+
+                renderCategoryTabs();
+                renderResults();
+                state.hidden = true;
+                browser.hidden = false;
+                syncTime.textContent = `最近同步：${new Date(payload.syncedAt).toLocaleString("zh-CN")}`;
+                syncTime.hidden = false;
+            })
             .catch(() => {
-                showMessage("暂时无法从 Bangumi 获取收藏，请稍后再试。", true);
+                state.textContent = "暂时无法从 Bangumi 获取收藏，请稍后再试。";
+                state.classList.add("is-error");
             });
     })();
 </script>
@@ -288,43 +422,100 @@ import Layout from "../layouts/Layout.astro";
         color: var(--text-secondary);
     }
 
-    .review-groups {
-        display: grid;
-        gap: 36px;
+    .review-browser[hidden],
+    .review-card[hidden],
+    .empty-result[hidden],
+    .folder-tab[hidden] {
+        display: none;
+    }
+
+    .folder-nav,
+    .folder-options {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 8px;
+        padding-top: 8px;
     }
 
     .category-tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 7px;
         margin-bottom: 24px;
     }
 
-    .category-tabs button {
-        min-height: 32px;
-        padding: 4px 13px;
+    .folder-tab {
+        position: relative;
+        min-height: 36px;
+        margin-top: 7px;
+        padding: 7px 14px 6px;
         border: 1px solid var(--border);
-        border-radius: 999px;
+        border-radius: 0 7px 7px 7px;
         color: var(--text-secondary);
         background: var(--surface);
         cursor: pointer;
+        transition:
+            border-color 160ms ease,
+            color 160ms ease,
+            background 160ms ease;
     }
 
-    .category-tabs button:hover {
+    .folder-tab::before {
+        position: absolute;
+        top: -8px;
+        left: -1px;
+        width: 44px;
+        height: 8px;
+        border: 1px solid var(--border);
+        border-bottom: 0;
+        border-radius: 6px 6px 0 0;
+        background: var(--surface);
+        content: "";
+        transition:
+            border-color 160ms ease,
+            background 160ms ease;
+    }
+
+    .folder-tab:hover {
         border-color: var(--accent-blue);
         color: var(--text);
         background: var(--surface-hover);
     }
 
-    .category-tabs button[aria-pressed="true"] {
+    .folder-tab[aria-pressed="true"] {
         border-color: var(--accent-fill);
         color: var(--on-accent);
         background: var(--accent-fill);
     }
 
-    .category-tabs[hidden],
-    .review-group[hidden] {
-        display: none;
+    .folder-tab[aria-pressed="true"]::before {
+        border-color: var(--accent-fill);
+        background: var(--accent-fill);
+    }
+
+    .folder-filters {
+        display: grid;
+        gap: 13px;
+        margin-bottom: 28px;
+        padding: 14px 16px 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-muted);
+    }
+
+    .folder-row {
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+    }
+
+    .folder-label {
+        padding-top: 9px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .review-results {
+        min-width: 0;
     }
 
     .group-header {
@@ -348,14 +539,14 @@ import Layout from "../layouts/Layout.astro";
 
     .review-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 
     .review-card {
         display: grid;
-        grid-template-columns: 88px minmax(0, 1fr);
-        gap: 14px;
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 16px;
         min-width: 0;
         padding: 12px;
         border: 1px solid var(--border);
@@ -411,19 +602,19 @@ import Layout from "../layouts/Layout.astro";
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 10px;
+        gap: 16px;
     }
 
     .review-heading h3 {
         margin: 0;
         overflow-wrap: anywhere;
-        font-size: 18px;
+        font-size: 20px;
         line-height: 1.4;
     }
 
     .rating {
         flex: 0 0 auto;
-        padding: 3px 7px;
+        padding: 3px 8px;
         border-radius: 999px;
         font-size: 12px;
         color: var(--on-accent);
@@ -431,16 +622,45 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .original-title {
-        margin: 6px 0 0;
+        margin: 5px 0 0;
         overflow-wrap: anywhere;
         font-size: 12px;
         color: var(--text-muted);
     }
 
     .review-meta {
-        margin: 10px 0 0;
-        font-size: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+    }
+
+    .review-meta span {
+        padding: 3px 8px;
+        border: 1px solid var(--border-soft);
+        border-radius: 999px;
+        font-size: 11px;
         color: var(--text-secondary);
+        background: var(--surface-muted);
+    }
+
+    .review-meta .region-badge {
+        border-color: color-mix(in srgb, var(--accent-blue) 45%, transparent);
+        color: var(--accent-blue);
+    }
+
+    .review-meta [hidden] {
+        display: none;
+    }
+
+    .empty-result {
+        margin: 0;
+        padding: 28px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        text-align: center;
+        color: var(--text-muted);
+        background: var(--surface);
     }
 
     .sync-time {
@@ -449,9 +669,19 @@ import Layout from "../layouts/Layout.astro";
         text-align: right;
     }
 
-    @media (max-width: 760px) {
-        .review-grid {
+    @media (max-width: 700px) {
+        .folder-row {
             grid-template-columns: 1fr;
+            gap: 2px;
+        }
+
+        .folder-label {
+            padding-top: 0;
+        }
+
+        .review-card {
+            grid-template-columns: 72px minmax(0, 1fr);
+            gap: 12px;
         }
     }
 
