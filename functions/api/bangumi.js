@@ -1,7 +1,7 @@
 const DEFAULT_USERNAME = "kreedy_ke";
 const BANGUMI_API = "https://api.bgm.tv";
 const CACHE_SECONDS = 6 * 60 * 60;
-const CACHE_VERSION = "2";
+const CACHE_VERSION = "3";
 const PAGE_SIZE = 50;
 const MAX_PAGES = 20;
 
@@ -136,6 +136,10 @@ const normalizeCollection = (collection) => {
         completion = "ongoing";
     } else if (includesTag(tags, completedTags)) {
         completion = "completed";
+    } else if (Number(collection.type) === 2) {
+        completion = "completed";
+    } else if (Number(collection.type) === 3) {
+        completion = "ongoing";
     }
 
     return {

@@ -19,7 +19,8 @@ import Layout from "../layouts/Layout.astro";
     <p class="source-note">
         数据来自
         <a href="https://bgm.tv/user/kreedy_ke" data-profile-link>Bangumi</a>，
-        每 6 小时自动更新。仅显示已评分的作品。
+        每 6 小时自动更新。仅显示已评分的作品；完结状态优先读取 Bangumi
+        标签，缺失时按收藏进度推断。
     </p>
 
     <p class="review-state" data-review-state role="status">
