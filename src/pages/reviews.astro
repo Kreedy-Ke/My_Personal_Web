@@ -523,8 +523,8 @@ import Layout from "../layouts/Layout.astro";
         position: absolute;
         z-index: 2;
         bottom: calc(100% - 1px);
-        right: 0;
-        left: 0;
+        right: -1px;
+        left: -1px;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
@@ -548,6 +548,14 @@ import Layout from "../layouts/Layout.astro";
 
     :global(.folder-main-tab + .folder-main-tab) {
         border-left: 0;
+    }
+
+    :global(.folder-main-tab:first-child) {
+        border-radius: 10px 0 0 0;
+    }
+
+    :global(.folder-main-tab:last-child) {
+        border-radius: 0 10px 0 0;
     }
 
     :global(.folder-main-tab:hover) {
