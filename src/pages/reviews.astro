@@ -465,7 +465,7 @@ import Layout from "../layouts/Layout.astro";
         padding: 0;
     }
 
-    .folder-main-tab {
+    :global(.folder-main-tab) {
         width: 100%;
         min-width: 0;
         min-height: 41px;
@@ -479,14 +479,14 @@ import Layout from "../layouts/Layout.astro";
         cursor: pointer;
     }
 
-    .folder-main-tab:hover {
+    :global(.folder-main-tab:hover) {
         border-color: var(--accent-blue);
         color: var(--accent-blue);
         background: var(--surface-hover);
     }
 
-    .folder-main-tab[aria-pressed="true"],
-    .folder-main-tab.is-active {
+    :global(.folder-main-tab[aria-pressed="true"]),
+    :global(.folder-main-tab.is-active) {
         z-index: 1;
         margin-bottom: -1px;
         border-color: var(--accent-fill) !important;
@@ -497,8 +497,8 @@ import Layout from "../layouts/Layout.astro";
         box-shadow: 0 -4px 12px color-mix(in srgb, var(--accent-fill) 28%, transparent);
     }
 
-    .folder-main-tab[aria-pressed="true"]::after,
-    .folder-main-tab.is-active::after {
+    :global(.folder-main-tab[aria-pressed="true"]::after),
+    :global(.folder-main-tab.is-active::after) {
         position: absolute;
         right: -1px;
         bottom: -2px;
