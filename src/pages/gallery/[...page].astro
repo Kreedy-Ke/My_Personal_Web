@@ -1,18 +1,9 @@
 ---
-import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
+import { getGalleryImages } from "../../lib/gallery";
 
 export async function getStaticPaths({ paginate }) {
-    const galleries = (await getCollection("galleries", ({ data }) => {
-        return data.draft !== true;
-    })).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-
-    const images = galleries.flatMap((gallery) => {
-        return gallery.data.images.map((image) => ({
-            ...image,
-            galleryId: gallery.id,
-        }));
-    });
+    const images = await getGalleryImages();
 
     return paginate(images, {
         pageSize: 12,
@@ -36,17 +27,21 @@ const { page } = Astro.props;
         </div>
     </header>
 
-    <section class="gallery-grid" aria-label="图片列表">
-        {page.data.map((image, index) => (
-            <figure class="gallery-item">
-                <img
-                    src={image.src}
-                    alt={image.alt ?? ""}
-                    loading={page.currentPage === 1 && index < 3 ? "eager" : "lazy"}
-                />
-            </figure>
-        ))}
-    </section>
+    {page.data.length > 0 ? (
+        <section class="gallery-grid" aria-label="图片列表">
+            {page.data.map((image, index) => (
+                <figure class="gallery-item">
+                    <img
+                        src={image.src}
+                        alt=""
+                        loading={page.currentPage === 1 && index < 3 ? "eager" : "lazy"}
+                    />
+                </figure>
+            ))}
+        </section>
+    ) : (
+        <p class="empty-gallery">还没有上传图片。</p>
+    )}
 
     {page.lastPage > 1 && (
         <nav class="pagination" aria-label="图片分页">
@@ -126,6 +121,16 @@ const { page } = Astro.props;
 
     .gallery-item:hover img {
         opacity: 0.88;
+    }
+
+    .empty-gallery {
+        margin: 0;
+        padding: 28px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        text-align: center;
+        color: var(--text-muted);
+        background: var(--surface);
     }
 
     .pagination {
