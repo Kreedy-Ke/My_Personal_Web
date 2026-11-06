@@ -131,6 +131,7 @@ import Layout from "../layouts/Layout.astro";
                 <span class="cover-placeholder">暂无封面</span>
             </div>
             <div class="review-body">
+                <span class="detail-score" hidden></span>
                 <div class="review-heading">
                     <h3></h3>
                     <p class="original-title"></p>
@@ -145,7 +146,6 @@ import Layout from "../layouts/Layout.astro";
                     </p>
                 </div>
                 <div class="custom-tags" hidden>
-                    <span class="detail-score" hidden></span>
                     <span class="detail-comment" hidden></span>
                 </div>
             </div>
@@ -307,9 +307,9 @@ import Layout from "../layouts/Layout.astro";
             }
 
             if (note?.score !== null && note?.score !== undefined) {
-                detailScore.textContent = `细化 ${note.score.toFixed(1)}`;
+                detailScore.textContent = note.score.toFixed(1);
                 detailScore.hidden = false;
-                customTags.hidden = false;
+                card.classList.add("has-note-score");
             }
 
             if (note?.comment) {
@@ -802,7 +802,12 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .review-body {
+        position: relative;
         min-width: 0;
+    }
+
+    .review-card.has-note-score .review-body {
+        padding-right: 58px;
     }
 
     .review-heading {
@@ -897,9 +902,9 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .detail-score {
-        order: 2;
-        flex: 0 0 auto;
-        margin-left: auto;
+        position: absolute;
+        top: 0;
+        right: 0;
         padding: 3px 10px;
         border-radius: 999px;
         font-size: 12px;
