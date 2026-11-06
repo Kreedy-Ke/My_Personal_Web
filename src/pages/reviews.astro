@@ -43,52 +43,56 @@ const statusLabels = {
         </div>
     </header>
 
-    <div class="year-list">
-        {years.map((year) => (
-            <section class="year-group">
-                <h2 class="year-title">{year}</h2>
-                <div class="review-list">
-                    {reviews
-                        .filter((review) => review.data.date.getFullYear() === year)
-                        .map((review) => (
-                            <a class="review-card" href={`/reviews/${review.id}/`}>
-                                {review.data.cover ? (
-                                    <img
-                                        src={review.data.cover}
-                                        alt=""
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div class="cover-placeholder">
-                                        {categoryLabels[review.data.category]}
-                                    </div>
-                                )}
+    {reviews.length > 0 ? (
+        <div class="year-list">
+            {years.map((year) => (
+                <section class="year-group">
+                    <h2 class="year-title">{year}</h2>
+                    <div class="review-list">
+                        {reviews
+                            .filter((review) => review.data.date.getFullYear() === year)
+                            .map((review) => (
+                                <a class="review-card" href={`/reviews/${review.id}/`}>
+                                    {review.data.cover ? (
+                                        <img
+                                            src={review.data.cover}
+                                            alt=""
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <div class="cover-placeholder">
+                                            {categoryLabels[review.data.category]}
+                                        </div>
+                                    )}
 
-                                <div class="review-body">
-                                    <div class="review-title">
-                                        <h3>{review.data.workTitle}</h3>
-                                        {review.data.originalTitle && (
-                                            <p>{review.data.originalTitle}</p>
-                                        )}
-                                    </div>
+                                    <div class="review-body">
+                                        <div class="review-title">
+                                            <h3>{review.data.workTitle}</h3>
+                                            {review.data.originalTitle && (
+                                                <p>{review.data.originalTitle}</p>
+                                            )}
+                                        </div>
 
-                                    <div class="review-meta">
-                                        <span>{categoryLabels[review.data.category]}</span>
-                                        <span>{statusLabels[review.data.status]}</span>
-                                        {review.data.year && <span>{review.data.year}</span>}
-                                        {review.data.rating !== undefined && (
-                                            <span>{review.data.rating}/10</span>
-                                        )}
-                                    </div>
+                                        <div class="review-meta">
+                                            <span>{categoryLabels[review.data.category]}</span>
+                                            <span>{statusLabels[review.data.status]}</span>
+                                            {review.data.year && <span>{review.data.year}</span>}
+                                            {review.data.rating !== undefined && (
+                                                <span>{review.data.rating}/10</span>
+                                            )}
+                                        </div>
 
-                                    <p class="summary">{review.data.summary}</p>
-                                </div>
-                            </a>
-                        ))}
-                </div>
-            </section>
-        ))}
-    </div>
+                                        <p class="summary">{review.data.summary}</p>
+                                    </div>
+                                </a>
+                            ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    ) : (
+        <p class="empty-reviews">还没有作品评价。</p>
+    )}
 </Layout>
 
 <style>
@@ -139,6 +143,16 @@ const statusLabels = {
     .review-list {
         display: grid;
         gap: 16px;
+    }
+
+    .empty-reviews {
+        margin: 0;
+        padding: 28px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        text-align: center;
+        color: var(--text-muted);
+        background: var(--surface);
     }
 
     .review-card {

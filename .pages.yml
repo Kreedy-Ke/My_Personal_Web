@@ -13,7 +13,7 @@ content:
     path: src/content/galleries
     format: yaml-frontmatter
     filename:
-      template: "{year}-{month}-{day}-{primary}.md"
+      template: "{year}-{month}-{day}-{hour}-{minute}-{second}.md"
       field: create
     view:
       primary: summary
