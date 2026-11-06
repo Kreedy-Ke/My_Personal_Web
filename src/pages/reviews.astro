@@ -39,7 +39,7 @@ import Layout from "../layouts/Layout.astro";
                 <summary class="filter-summary">
                     <span class="filter-title">标签索引</span>
                     <span class="filter-summary-state">
-                        <span data-filter-summary>日本</span>
+                        <span data-filter-summary>日本 · 看过</span>
                         <span class="filter-chevron" aria-hidden="true"></span>
                     </span>
                 </summary>
@@ -78,13 +78,13 @@ import Layout from "../layouts/Layout.astro";
                     <div class="folder-row">
                         <span class="folder-label">收藏</span>
                         <div class="folder-options" data-status-tabs role="group" aria-label="收藏状态筛选">
-                            <button class="folder-tab" type="button" data-status="all" aria-pressed="true">
+                            <button class="folder-tab" type="button" data-status="all" aria-pressed="false">
                                 全部
                             </button>
                             <button class="folder-tab" type="button" data-status="watching" aria-pressed="false">
                                 在看
                             </button>
-                            <button class="folder-tab" type="button" data-status="watched" aria-pressed="false">
+                            <button class="folder-tab" type="button" data-status="watched" aria-pressed="true">
                                 看过
                             </button>
                             <button class="folder-tab" type="button" data-status="wish" aria-pressed="false">
@@ -225,7 +225,7 @@ import Layout from "../layouts/Layout.astro";
         let activeCategory = "";
         let region = "japan";
         let completion = "all";
-        let status = "all";
+        let status = "watched";
         let currentPage = 1;
 
         const updateFilterSummary = () => {
@@ -422,6 +422,7 @@ import Layout from "../layouts/Layout.astro";
         bindFilterGroup(statusTabs, "status", (value) => {
             status = value;
         });
+        updateFilterSummary();
 
         pagePrev.addEventListener("click", () => {
             currentPage = Math.max(1, currentPage - 1);
