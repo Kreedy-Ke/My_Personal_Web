@@ -76,8 +76,8 @@ import Layout from "../layouts/Layout.astro";
                     </div>
 
                     <div class="folder-row">
-                        <span class="folder-label">收藏</span>
-                        <div class="folder-options" data-status-tabs role="group" aria-label="收藏状态筛选">
+                        <span class="folder-label">观看状态</span>
+                        <div class="folder-options" data-status-tabs role="group" aria-label="观看状态筛选">
                             <button class="folder-tab" type="button" data-status="all" aria-pressed="false">
                                 全部
                             </button>
@@ -133,15 +133,16 @@ import Layout from "../layouts/Layout.astro";
             <div class="review-body">
                 <div class="review-heading">
                     <h3></h3>
-                    <span class="rating"></span>
+                    <p class="original-title"></p>
                 </div>
-                <p class="original-title"></p>
-                <div class="review-meta">
-                    <span class="status-badge"></span>
-                    <span class="completion-badge" hidden></span>
-                    <span class="region-badge" hidden>非日本</span>
-                    <span class="release-date" hidden></span>
-                    <span class="bangumi-score" hidden></span>
+                <div class="score-line">
+                    <span class="release-year" hidden></span>
+                    <p class="scores">
+                        <span class="my-score"></span>
+                        <span class="score-separator">/</span>
+                        <span class="bangumi-score"></span>
+                        <span class="score-note">（我的评分/Bangumi 均分）</span>
+                    </p>
                 </div>
             </div>
         </a>
@@ -269,17 +270,16 @@ import Layout from "../layouts/Layout.astro";
             const placeholder = card.querySelector<HTMLElement>(".cover-placeholder");
             const title = card.querySelector<HTMLElement>("h3");
             const originalTitle = card.querySelector<HTMLElement>(".original-title");
-            const rating = card.querySelector<HTMLElement>(".rating");
-            const statusBadge = card.querySelector<HTMLElement>(".status-badge");
-            const completionBadge = card.querySelector<HTMLElement>(".completion-badge");
-            const regionBadge = card.querySelector<HTMLElement>(".region-badge");
-            const releaseDate = card.querySelector<HTMLElement>(".release-date");
+            const releaseYear = card.querySelector<HTMLElement>(".release-year");
+            const myScore = card.querySelector<HTMLElement>(".my-score");
             const bangumiScore = card.querySelector<HTMLElement>(".bangumi-score");
 
             card.href = item.url;
             title.textContent = item.title;
-            rating.textContent = `${item.rating} / 10`;
-            statusBadge.textContent = item.status;
+            myScore.textContent = item.rating.toFixed(1);
+            bangumiScore.textContent = item.subjectScore === null
+                ? "--"
+                : item.subjectScore.toFixed(1);
 
             if (item.originalTitle) {
                 originalTitle.textContent = item.originalTitle;
@@ -287,26 +287,9 @@ import Layout from "../layouts/Layout.astro";
                 originalTitle.remove();
             }
 
-            if (item.completion === "completed") {
-                completionBadge.textContent = "完结";
-                completionBadge.hidden = false;
-            } else if (item.completion === "ongoing") {
-                completionBadge.textContent = "未完结";
-                completionBadge.hidden = false;
-            }
-
-            if (item.region === "non-japan") {
-                regionBadge.hidden = false;
-            }
-
             if (item.date) {
-                releaseDate.textContent = `发布 ${item.date}`;
-                releaseDate.hidden = false;
-            }
-
-            if (item.subjectScore !== null) {
-                bangumiScore.textContent = `Bangumi ${item.subjectScore.toFixed(1)}`;
-                bangumiScore.hidden = false;
+                releaseYear.textContent = item.date.slice(0, 4);
+                releaseYear.hidden = false;
             }
 
             if (item.cover) {
@@ -784,9 +767,9 @@ import Layout from "../layouts/Layout.astro";
 
     .review-heading {
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 12px;
     }
 
     .review-heading h3 {
@@ -796,45 +779,63 @@ import Layout from "../layouts/Layout.astro";
         line-height: 1.4;
     }
 
-    .rating {
-        flex: 0 0 auto;
-        padding: 3px 8px;
-        border-radius: 999px;
-        font-size: 12px;
-        color: white;
-        background: var(--review-strong);
-    }
-
     .original-title {
-        margin: 5px 0 0;
+        margin: 0;
         overflow-wrap: anywhere;
-        font-size: 12px;
+        font-size: 13px;
+        line-height: 1.4;
         color: rgb(23 51 38 / 68%);
     }
 
-    .review-meta {
+    .score-line {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        align-items: center;
+        gap: 8px;
         margin-top: 12px;
     }
 
-    .review-meta span {
-        padding: 3px 8px;
-        border: 1px solid rgb(23 51 38 / 22%);
-        border-radius: 999px;
+    .release-year {
+        padding: 1px 6px;
+        border: 1px solid rgb(23 51 38 / 38%);
+        border-radius: 2px;
         font-size: 11px;
-        color: rgb(23 51 38 / 82%);
-        background: rgb(255 255 255 / 26%);
-    }
-
-    .review-meta .region-badge {
-        border-color: var(--review-strong);
+        line-height: 1.5;
         color: var(--review-strong);
     }
 
-    .review-meta [hidden] {
+    .release-year[hidden] {
         display: none;
+    }
+
+    .scores {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 2px;
+        margin: 0;
+        font-size: 13px;
+        font-weight: 650;
+        line-height: 1.5;
+    }
+
+    .my-score {
+        color: #0c3b27;
+    }
+
+    .score-separator {
+        color: rgb(23 51 38 / 56%);
+    }
+
+    .bangumi-score {
+        color: #7a4a00;
+    }
+
+    .score-note {
+        margin-left: 3px;
+        font-size: 11px;
+        font-weight: 400;
+        color: rgb(23 51 38 / 62%);
     }
 
     .empty-result {
