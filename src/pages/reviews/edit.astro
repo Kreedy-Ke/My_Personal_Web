@@ -124,6 +124,19 @@ import Layout from "../../layouts/Layout.astro";
             return;
         }
 
+        const getRequiredElement = <T extends Element>(
+            root: ParentNode,
+            selector: string,
+        ): T => {
+            const element = root.querySelector<T>(selector);
+
+            if (!element) {
+                throw new Error(`Missing required element: ${selector}`);
+            }
+
+            return element;
+        };
+
         const TOKEN_KEY = "kreedy-review-notes-token";
         let categories: ReviewPayload["categories"] = [];
         let notes: Record<string, ReviewNote> = {};
@@ -148,14 +161,32 @@ import Layout from "../../layouts/Layout.astro";
 
             for (const item of items) {
                 const form = template.content.firstElementChild?.cloneNode(true) as HTMLFormElement;
-                const image = form.querySelector<HTMLImageElement>("img");
-                const title = form.querySelector<HTMLElement>("h3");
-                const originalTitle = form.querySelector<HTMLElement>(".original-title");
-                const subjectId = form.querySelector<HTMLElement>(".subject-id");
-                const bangumiRating = form.querySelector<HTMLElement>(".bangumi-rating");
-                const scoreInput = form.querySelector<HTMLInputElement>('input[type="number"]');
-                const commentInput = form.querySelector<HTMLInputElement>('input[type="text"]');
-                const saveState = form.querySelector<HTMLElement>(".save-state");
+                const image = getRequiredElement<HTMLImageElement>(form, "img");
+                const title = getRequiredElement<HTMLElement>(form, "h3");
+                const originalTitle = getRequiredElement<HTMLElement>(
+                    form,
+                    ".original-title",
+                );
+                const subjectId = getRequiredElement<HTMLElement>(
+                    form,
+                    ".subject-id",
+                );
+                const bangumiRating = getRequiredElement<HTMLElement>(
+                    form,
+                    ".bangumi-rating",
+                );
+                const scoreInput = getRequiredElement<HTMLInputElement>(
+                    form,
+                    'input[type="number"]',
+                );
+                const commentInput = getRequiredElement<HTMLInputElement>(
+                    form,
+                    'input[type="text"]',
+                );
+                const saveState = getRequiredElement<HTMLElement>(
+                    form,
+                    ".save-state",
+                );
                 const note = notes[String(item.id)];
 
                 title.textContent = item.title;

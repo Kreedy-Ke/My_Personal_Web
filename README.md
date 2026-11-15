@@ -9,8 +9,6 @@ pnpm install
 pnpm dev
 ```
 
-Windows 上也可以双击 `start-site.cmd` 启动，并直接打开 Writing 页面。
-
 ## 内容维护
 
 - 文章位于 `src/content/articles/`，默认创建到 Writing，可使用 `pnpm new:article 文件名` 创建。

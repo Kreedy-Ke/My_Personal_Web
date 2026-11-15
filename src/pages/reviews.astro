@@ -39,6 +39,15 @@ import Layout from "../layouts/Layout.astro";
 
                 <div class="folder-filters">
                     <div class="folder-row">
+                        <span class="folder-label">年份</span>
+                        <div class="folder-options" data-year-tabs role="group" aria-label="年份筛选">
+                            <button class="folder-tab" type="button" data-year="all" aria-pressed="true">
+                                全部年份
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="folder-row">
                         <span class="folder-label">地区</span>
                         <div class="folder-options" data-region-tabs role="group" aria-label="地区筛选">
                             <button class="folder-tab" type="button" data-region="all" aria-pressed="false">
@@ -189,6 +198,7 @@ import Layout from "../layouts/Layout.astro";
         const regionTabs = document.querySelector<HTMLElement>("[data-region-tabs]");
         const completionTabs = document.querySelector<HTMLElement>("[data-completion-tabs]");
         const statusTabs = document.querySelector<HTMLElement>("[data-status-tabs]");
+        const yearTabs = document.querySelector<HTMLElement>("[data-year-tabs]");
         const filterSummary = document.querySelector<HTMLElement>("[data-filter-summary]");
         const grid = document.querySelector<HTMLElement>("[data-review-grid]");
         const activeTitle = document.querySelector<HTMLElement>("[data-active-title]");
@@ -208,6 +218,7 @@ import Layout from "../layouts/Layout.astro";
             !regionTabs ||
             !completionTabs ||
             !statusTabs ||
+            !yearTabs ||
             !filterSummary ||
             !grid ||
             !activeTitle ||
@@ -223,12 +234,26 @@ import Layout from "../layouts/Layout.astro";
             return;
         }
 
+        const getRequiredElement = <T extends Element>(
+            root: ParentNode,
+            selector: string,
+        ): T => {
+            const element = root.querySelector<T>(selector);
+
+            if (!element) {
+                throw new Error(`Missing required element: ${selector}`);
+            }
+
+            return element;
+        };
+
         const PAGE_SIZE = 20;
         let categories: Category[] = [];
         let activeCategory = "";
         let region = "japan";
         let completion = "all";
         let status = "watched";
+        let year = "all";
         let currentPage = 1;
         let reviewNotes: Record<string, ReviewNote> = {};
 
@@ -252,6 +277,7 @@ import Layout from "../layouts/Layout.astro";
                 onhold: "搁置",
             };
             const labels = [
+                year === "all" ? "" : `${year} 年`,
                 regionLabels[region],
                 completionLabels[completion],
                 statusLabels[status],
@@ -269,16 +295,37 @@ import Layout from "../layouts/Layout.astro";
 
         const createCard = (item: ReviewItem, note?: ReviewNote) => {
             const card = cardTemplate.content.firstElementChild?.cloneNode(true) as HTMLAnchorElement;
-            const image = card.querySelector<HTMLImageElement>("img");
-            const placeholder = card.querySelector<HTMLElement>(".cover-placeholder");
-            const title = card.querySelector<HTMLElement>("h3");
-            const originalTitle = card.querySelector<HTMLElement>(".original-title");
-            const releaseYear = card.querySelector<HTMLElement>(".release-year");
-            const myScore = card.querySelector<HTMLElement>(".my-score");
-            const bangumiScore = card.querySelector<HTMLElement>(".bangumi-score");
-            const customTags = card.querySelector<HTMLElement>(".custom-tags");
-            const detailScore = card.querySelector<HTMLElement>(".detail-score");
-            const detailComment = card.querySelector<HTMLElement>(".detail-comment");
+            const image = getRequiredElement<HTMLImageElement>(card, "img");
+            const placeholder = getRequiredElement<HTMLElement>(
+                card,
+                ".cover-placeholder",
+            );
+            const title = getRequiredElement<HTMLElement>(card, "h3");
+            const originalTitle = getRequiredElement<HTMLElement>(
+                card,
+                ".original-title",
+            );
+            const releaseYear = getRequiredElement<HTMLElement>(
+                card,
+                ".release-year",
+            );
+            const myScore = getRequiredElement<HTMLElement>(card, ".my-score");
+            const bangumiScore = getRequiredElement<HTMLElement>(
+                card,
+                ".bangumi-score",
+            );
+            const customTags = getRequiredElement<HTMLElement>(
+                card,
+                ".custom-tags",
+            );
+            const detailScore = getRequiredElement<HTMLElement>(
+                card,
+                ".detail-score",
+            );
+            const detailComment = getRequiredElement<HTMLElement>(
+                card,
+                ".detail-comment",
+            );
 
             card.href = item.url;
             title.textContent = item.title;
@@ -329,12 +376,14 @@ import Layout from "../layouts/Layout.astro";
             }
 
             const items = category.items.filter((item) => {
+                const matchesYear =
+                    year === "all" || item.date.slice(0, 4) === year;
                 const matchesRegion = region === "all" || item.region === region;
                 const matchesCompletion =
                     completion === "all" || item.completion === completion;
                 const matchesStatus = status === "all" || item.statusKey === status;
 
-                return matchesRegion && matchesCompletion && matchesStatus;
+                return matchesYear && matchesRegion && matchesCompletion && matchesStatus;
             });
             const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
             currentPage = Math.min(currentPage, totalPages);
@@ -390,12 +439,49 @@ import Layout from "../layouts/Layout.astro";
                     activeCategory = category.key;
                     currentPage = 1;
                     setButtonPressed(categoryTabs, button);
+                    renderYearTabs();
+                    updateFilterSummary();
                     renderResults();
                 });
                 categoryTabs.append(button);
             }
 
             activeCategory = categories[0]?.key ?? "";
+        };
+
+        const renderYearTabs = () => {
+            const category = categories.find((item) => item.key === activeCategory);
+            const years = [
+                ...new Set(
+                    (category?.items ?? [])
+                        .map((item) => item.date.slice(0, 4))
+                        .filter((value) => /^\d{4}$/.test(value)),
+                ),
+            ].sort((a, b) => b.localeCompare(a));
+
+            if (year !== "all" && !years.includes(year)) {
+                year = "all";
+            }
+
+            yearTabs.replaceChildren();
+
+            for (const value of ["all", ...years]) {
+                const button = document.createElement("button");
+                button.className = "folder-tab";
+                button.type = "button";
+                button.dataset.year = value;
+                button.textContent = value === "all" ? "全部年份" : `${value} 年`;
+                button.setAttribute("aria-pressed", String(value === year));
+                button.classList.toggle("is-active", value === year);
+                button.addEventListener("click", () => {
+                    year = value;
+                    currentPage = 1;
+                    setButtonPressed(yearTabs, button);
+                    updateFilterSummary();
+                    renderResults();
+                });
+                yearTabs.append(button);
+            }
         };
 
         const bindFilterGroup = (
@@ -465,6 +551,7 @@ import Layout from "../layouts/Layout.astro";
                 }
 
                 renderCategoryTabs();
+                renderYearTabs();
                 renderResults();
                 state.hidden = true;
                 browser.hidden = false;
