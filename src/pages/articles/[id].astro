@@ -2,6 +2,7 @@
 import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import { getArticleMeta } from "../../lib/articles";
+import { articleSections } from "../../lib/article-sections";
 
 export async function getStaticPaths() {
     const articles = await getCollection("articles", ({ data }) => {
@@ -17,6 +18,7 @@ export async function getStaticPaths() {
 const { article } = Astro.props;
 const { Content } = await render(article);
 const meta = getArticleMeta(article);
+const sectionMeta = articleSections[article.data.section];
 const hasSeparateWrittenDate = article.data.writtenDate !== undefined;
 ---
 
@@ -24,9 +26,15 @@ const hasSeparateWrittenDate = article.data.writtenDate !== undefined;
     title={meta.title}
     description={meta.summary}
     width="760px"
+    activeSection={article.data.section}
 >
     <article>
         <header>
+            <a class="section-link" href={sectionMeta.href}>
+                {sectionMeta.label}
+                <span aria-hidden="true">·</span>
+                {sectionMeta.title}
+            </a>
             <h1>{meta.title}</h1>
             <div class="date-line">
                 {hasSeparateWrittenDate ? (
@@ -75,6 +83,25 @@ const hasSeparateWrittenDate = article.data.writtenDate !== undefined;
 </Layout>
 
 <style>
+    .section-link {
+        display: inline-flex;
+        gap: 7px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        text-decoration: none;
+    }
+
+    .section-link span {
+        color: var(--accent-blue);
+    }
+
+    .section-link:hover {
+        color: var(--accent-blue);
+    }
+
     .date-line {
         display: flex;
         flex-wrap: wrap;

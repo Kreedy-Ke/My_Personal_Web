@@ -1,16 +1,24 @@
 ---
 import { SITE_NAME } from "../config";
+import type { ArticleSection } from "../lib/article-sections";
 
 interface Props {
     title?: string;
     description: string;
     width?: string;
+    activeSection?: ArticleSection;
 }
 
-const { title, description, width = "1280px" } = Astro.props;
+const { title, description, width = "1280px", activeSection } = Astro.props;
 
 const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 const currentPath = Astro.url.pathname;
+const pathSection = currentPath.startsWith("/writing")
+    ? "writing"
+    : currentPath.startsWith("/essays")
+      ? "essays"
+      : undefined;
+const selectedSection = activeSection ?? pathSection;
 const navItems = [
     {
         label: "Home",
@@ -18,9 +26,14 @@ const navItems = [
         active: currentPath === "/",
     },
     {
-        label: "Articles",
-        href: "/articles/",
-        active: currentPath.startsWith("/articles"),
+        label: "Writing",
+        href: "/writing/",
+        active: selectedSection === "writing",
+    },
+    {
+        label: "Essays",
+        href: "/essays/",
+        active: selectedSection === "essays",
     },
     {
         label: "Reviews",

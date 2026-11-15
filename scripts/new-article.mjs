@@ -2,10 +2,32 @@ import { access, mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const rawSlug = process.argv.slice(2).join("-").trim();
+const args = process.argv.slice(2);
+const sectionArgIndex = args.findIndex(
+    (arg) => arg === "--section" || arg.startsWith("--section="),
+);
+let section = "writing";
+
+if (sectionArgIndex !== -1) {
+    const sectionArg = args[sectionArgIndex];
+    const requestedSection = sectionArg.startsWith("--section=")
+        ? sectionArg.slice("--section=".length)
+        : args.splice(sectionArgIndex + 1, 1)[0];
+
+    args.splice(sectionArgIndex, 1);
+    section = requestedSection;
+}
+
+if (section !== "writing" && section !== "essays") {
+    console.error("文章分区只能是 writing 或 essays。");
+    console.error("用法：pnpm new:article my-article-name --section essays");
+    process.exit(1);
+}
+
+const rawSlug = args.join("-").trim();
 
 if (!rawSlug) {
-    console.error("用法：pnpm new:article my-article-name");
+    console.error("用法：pnpm new:article my-article-name [--section essays]");
     process.exit(1);
 }
 
@@ -46,6 +68,7 @@ await mkdir(dirname(target), { recursive: true });
 await writeFile(
     target,
     `---
+section: ${section}
 tags: []
 date: "${date}"
 ---

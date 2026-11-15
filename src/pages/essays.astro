@@ -1,0 +1,12 @@
+---
+import ArticleArchive from "../layouts/ArticleArchive.astro";
+import { articleSections } from "../lib/article-sections";
+---
+
+<ArticleArchive
+    pageTitle={articleSections.essays.label}
+    eyebrow={articleSections.essays.label}
+    title={articleSections.essays.title}
+    description={articleSections.essays.description}
+    section="essays"
+/>

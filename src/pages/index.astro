@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import { SITE_NAME } from "../config";
 import Layout from "../layouts/Layout.astro";
 import { getArticleMeta } from "../lib/articles";
+import { articleSections } from "../lib/article-sections";
 
 type RecentUpdate = {
     title: string;
@@ -14,9 +15,14 @@ type RecentUpdate = {
 
 const sections = [
     {
-        title: "Articles",
-        href: "/articles/",
-        description: "文章、笔记、长文和一些持续整理的想法。",
+        title: articleSections.writing.label,
+        href: articleSections.writing.href,
+        description: articleSections.writing.description,
+    },
+    {
+        title: articleSections.essays.label,
+        href: articleSections.essays.href,
+        description: articleSections.essays.description,
     },
     {
         title: "Reviews",
@@ -30,11 +36,23 @@ const articles = await getCollection(
     ({ data }) => data.draft !== true,
 );
 
+const writingCount = articles.filter(
+    ({ data }) => data.section === "writing",
+).length;
+const essayCount = articles.filter(
+    ({ data }) => data.section === "essays",
+).length;
+
 const stats = [
     {
-        label: "Articles",
-        value: articles.length,
-        href: "/articles/",
+        label: articleSections.writing.label,
+        value: writingCount,
+        href: articleSections.writing.href,
+    },
+    {
+        label: articleSections.essays.label,
+        value: essayCount,
+        href: articleSections.essays.href,
     },
     {
         label: "Reviews",
@@ -50,7 +68,7 @@ const recentUpdates: RecentUpdate[] = [
         return {
             title: meta.title,
             href: `/articles/${article.id}/`,
-            type: "文章",
+            type: articleSections[article.data.section].updateType,
             date: meta.publishedAt,
             summary: meta.summary,
         };
@@ -335,7 +353,7 @@ const recentUpdates: RecentUpdate[] = [
 
     .stat-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 1px;
         margin: 34px -34px -34px;
         border-top: 1px solid var(--border-strong);
