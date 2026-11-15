@@ -19,34 +19,22 @@ const sections = [
         description: "文章、笔记、长文和一些持续整理的想法。",
     },
     {
-        title: "Gallery",
-        href: "/gallery/",
-        description: "图片集、摄影、截图和视觉记录。",
-    },
-    {
         title: "Reviews",
         href: "/reviews/",
         description: "对书、电影、动画、游戏、音乐和他人作品的评价。",
     },
 ];
 
-const [articles, galleryImages] = await Promise.all([
-    getCollection("articles", ({ data }) => data.draft !== true),
-    getCollection("galleries", ({ data }) => data.draft !== true),
-]);
-
-const galleryImageCount = galleryImages.length;
+const articles = await getCollection(
+    "articles",
+    ({ data }) => data.draft !== true,
+);
 
 const stats = [
     {
         label: "Articles",
         value: articles.length,
         href: "/articles/",
-    },
-    {
-        label: "Images",
-        value: galleryImageCount,
-        href: "/gallery/",
     },
     {
         label: "Reviews",
@@ -73,7 +61,7 @@ const recentUpdates: RecentUpdate[] = [
 ---
 
 <Layout
-    description="一个用于存放文章、图片集、作品评价和个人档案的个人站。"
+    description="一个用于存放文章、作品评价和个人档案的个人站。"
     width="1280px"
 >
     <div class="home-grid">
@@ -87,7 +75,7 @@ const recentUpdates: RecentUpdate[] = [
                     </p>
                     <h1 id="home-title">{SITE_NAME}</h1>
                     <p class="intro">
-                        这里会存放我的文章、图片集、作品评价，以及一些长期整理的个人档案。
+                        这里会存放我的文章、作品评价，以及一些长期整理的个人档案。
                     </p>
                 </div>
             </div>
@@ -117,10 +105,10 @@ const recentUpdates: RecentUpdate[] = [
                 <h2 id="console-title">内容控制台</h2>
                 <div class="console-lines">
                     <p><span>STATUS</span> ONLINE</p>
-                    <p><span>SECTIONS</span> 03</p>
+                    <p><span>SECTIONS</span> {String(sections.length).padStart(2, "0")}</p>
                     <p>
                         <span>ENTRIES</span>
-                        <b data-entry-count>{String(articles.length + galleryImageCount).padStart(2, "0")}</b>
+                        <b data-entry-count>{String(articles.length).padStart(2, "0")}</b>
                     </p>
                     <p>
                         <span>LAST_SIGNAL</span>
@@ -164,7 +152,7 @@ const recentUpdates: RecentUpdate[] = [
             <section class="profile-block" aria-labelledby="about-site-title">
                 <h3 id="about-site-title">关于这个网站</h3>
                 <p>
-                    这里是我长期维护的个人空间，用来保存我的文章、图片、作品评价，
+                    这里是我长期维护的个人空间，用来保存我的文章和作品评价，
                 </p>
                 <p>
                     以及那些值得我专门整理的想法。
@@ -347,7 +335,7 @@ const recentUpdates: RecentUpdate[] = [
 
     .stat-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1px;
         margin: 34px -34px -34px;
         border-top: 1px solid var(--border-strong);
