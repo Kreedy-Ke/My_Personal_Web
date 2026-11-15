@@ -50,12 +50,6 @@ const emptyMessage = section
             <span class="title-divider" aria-hidden="true"></span>
             <p class="intro">{description}</p>
         </div>
-        {section && (
-            <a class="archive-link" href="/articles/">
-                查看全部文章
-                <span aria-hidden="true">→</span>
-            </a>
-        )}
     </header>
 
     <details class="archive-panel" data-archive-panel>
@@ -419,19 +413,6 @@ const emptyMessage = section
         font-size: 20px;
         line-height: 1.7;
         color: var(--text-secondary);
-    }
-
-    .archive-link {
-        display: inline-flex;
-        gap: 6px;
-        margin-top: 12px;
-        font-size: 13px;
-        color: var(--text-muted);
-        text-decoration: none;
-    }
-
-    .archive-link:hover {
-        color: var(--accent-blue);
     }
 
     .year-list {

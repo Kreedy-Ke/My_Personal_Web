@@ -13,7 +13,7 @@ pnpm dev
 
 - 文章位于 `src/content/articles/`，默认创建到 Writing，可使用 `pnpm new:article 文件名` 创建。
 - 随笔与时评使用 `pnpm new:article 文件名 --section essays` 创建。
-- Writing 和 Essays 分别位于 `/writing/`、`/essays/`，全部文章归档位于 `/articles/`。
+- Writing 和 Essays 分别位于 `/writing/`、`/essays/`。
 - 安科图片位于 `public/images/anke/`，可通过 `.pages.yml` 配置的 Pages CMS 管理。
 - 作品评价通过 Cloudflare Function 从 Bangumi 用户 `kreedy_ke` 自动同步，按动画、漫画和轻小说分类，结果缓存 6 小时。
 - 作品细化评分与短评通过 `/reviews/edit/` 编辑，需要 Cloudflare Pages 的 `REVIEW_NOTES` KV 绑定和 `REVIEW_NOTES_TOKEN` 密钥。
